@@ -20,6 +20,7 @@ module.exports = ({ port }) => new Promise(async res => {
             }
         ],
         paths: {},
+        definitions: {},
     };
 
     const pathGroups = {};
@@ -45,6 +46,16 @@ module.exports = ({ port }) => new Promise(async res => {
                 pathGroups[category][prettyPath][method] = {
                     tags: [ category ],
                     description: endpoint.description,
+                    security: Object.keys(endpoint.middleware || {}).filter(s => s.endsWith(`Key`)).map(m => ({
+                        [m]: []
+                    })),
+                    securitySchemes: Object.keys(endpoint.middleware || {}).filter(s => s.endsWith(`Key`)).map(m => ({
+                        [m]: {
+                            type: `apiKey`,
+                            in: `header`,
+                            name: `Authorization`
+                        }
+                    })),
                     parameters: endpoint.path.split(`/`).filter(p => p.startsWith(`:`)).map(p => ({
                         name: p.slice(1),
                         in: `path`,
@@ -53,6 +64,17 @@ module.exports = ({ port }) => new Promise(async res => {
                             type: `integer`
                         }
                     })),
+                    requestBody: (endpoint.body && typeof endpoint.body == `object`) ? {
+                        description: `Request body`,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: `object`,
+                                    example: JSON.stringify(endpoint.body, null, 4)
+                                }
+                            }
+                        }
+                    } : {},
                     responses: (endpoint.responses && typeof endpoint.responses == `object`) ? endpoint.responses : {}
                 };
 
@@ -61,45 +83,52 @@ module.exports = ({ port }) => new Promise(async res => {
                         path: endpoint.path,
                         description: `Successful lookup`
                     }
-                ]
+                ];
+
+                if(pathGroups[category][prettyPath][method].security.length && func.tests.find(t => t.headers)) func.tests.push({
+                    path: func.tests.find(t => t.headers).path,
+                    description: `Unauthorized request`
+                })
                 
                 for(const test of func.tests) await new Promise(async res => {
-                    if(test.path) {
+                    try {
+                        const response = await fetch(`http://localhost:${port}${test.path}`, {
+                            method: method.toUpperCase(),
+                            headers: test.headers || {},
+                            body: test.body ? JSON.stringify(test.body) : undefined
+                        })
+
+                        let contentType = response.headers.get(`content-type`)?.split(`;`)[0] || `text/plain`
+
+                        switch(response.headers.get(`content-type`)?.split(`;`)[0] || `text/plain`) {
+                            case `text/html`:
+                                contentType = `text/plain`;
+                                break;
+                        }
+
+                        let data = await response.text(), schemaType = `string`;
+
                         try {
-                            const response = await fetch(`http://localhost:${port}${test.path}`);
-
-                            let contentType = response.headers.get(`content-type`)?.split(`;`)[0] || `text/plain`
-
-                            switch(response.headers.get(`content-type`)?.split(`;`)[0] || `text/plain`) {
-                                case `text/html`:
-                                    contentType = `text/plain`;
-                                    break;
-                            }
-
-                            let data = await response.text(), schemaType = `string`;
-
-                            try {
-                                data = JSON.stringify(JSON.parse(data), null, 4);
-                                schemaType = `object`;
-                            } catch(e) {}
-        
-                            pathGroups[category][prettyPath][method].responses[response.status] = {
-                                description: test.description || response.statusText,
-                                content: {
-                                    [contentType]: {
-                                        schema: {
-                                            type: schemaType,
-                                            example: data
-                                        }
+                            data = JSON.stringify(JSON.parse(data), null, 4);
+                            schemaType = `object`;
+                        } catch(e) {}
+    
+                        pathGroups[category][prettyPath][method].responses[(test.code || response.status).toString()] = {
+                            description: test.description || response.statusText,
+                            content: {
+                                [contentType]: {
+                                    schema: {
+                                        type: schemaType,
+                                        example: test.response || data
                                     }
                                 }
-                            };
-        
-                            res();
-                        } catch(e) {
-                            console.error(`Failed to fetch ${test.path}`, e);
-                            res();
-                        }
+                            }
+                        };
+    
+                        res();
+                    } catch(e) {
+                        console.error(`Failed to fetch ${test.path}`, e);
+                        res();
                     }
                 })
             }
@@ -107,7 +136,7 @@ module.exports = ({ port }) => new Promise(async res => {
     };
 
     for(const [ name, entries ] of Object.keys(pathGroups).sort().map(k => [ k, pathGroups[k] ])) {
-        console.log(`Adding ${Object.keys(entries).length} entries from ${name}`);
+        log(`Adding ${Object.keys(entries).length} entries from ${name}`);
 
         swaggerObj.paths = {
             ...swaggerObj.paths,
