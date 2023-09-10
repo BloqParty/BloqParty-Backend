@@ -1,7 +1,22 @@
 const { Models } = require(`../service/mongo`);
-const user = require(`./user`)
+const strip = require(`./strip`);
 
 module.exports = {
+    getOverview: (hash) => new Promise(async (res, rej) => {
+        Models.leaderboards.findOne({ hash }).then(doc => {
+            if(doc) {
+                const { scores } = strip(doc);
+
+                const obj = Object.entries(scores).map(([ char, diff ]) => ({
+                    [char]: Object.keys(diff)
+                })).reduce((a,b) => ({ ...a, ...b }), {});
+
+                console.log(`overview of ${hash}`, obj);
+
+                res(obj);
+            } else rej(`Leaderboard not found`)
+        })
+    }),
     getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
         Models.leaderboards.findOne({ hash }).then(doc => {
             if(doc) {
@@ -35,7 +50,7 @@ module.exports = {
                             const userEntry = docs.find(b => b.game_id === a.id);
 
                             if(userEntry) {
-                                const data = user.parse(userEntry);
+                                const data = strip(userEntry);
 
                                 delete data.game_id;
                                 delete data.discord_id;

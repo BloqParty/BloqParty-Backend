@@ -1,25 +1,15 @@
 const { Models } = require(`../service/mongo`);
 const crypto = require('crypto');
 const fs = require('fs');
+const strip = require(`./strip`);
 
 module.exports = {
-    parse: (doc) => {
-        const user = doc.toObject();
-    
-        delete user._id
-        delete user.apiKey
-        delete user.sessionKey
-        delete user.sessionKeyExpires
-        delete user.__v // this is a mongoose thing: https://stackoverflow.com/questions/12495891/what-is-the-v-field-in-mongoose
-
-        return user;
-    },
     get: (game_id) => new Promise(async res => {
         Models.users.findOne({ game_id }).then(doc => {
             if(!doc) {
                 res(null);
             } else {
-                res(module.exports.parse(doc));
+                res(strip(doc));
             }
         });
     }),
