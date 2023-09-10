@@ -3,13 +3,31 @@ const { Schema, model } = require('mongoose');
 module.exports = new Schema({
     name: String,
     hash: String,
-    scores: [{
-        name: String,
-        value: Schema.ObjectId
-    }]
+    scores: {
+        type: Object,
+        default: {}
+    }
 })
 
-
+/*[
+        {
+            name: String,
+            type: Array,
+            value: [
+                {
+                    id: String,
+                    modifiedScore: Number,
+                    multipliedScore: Number,
+                    accuracy: Number,
+                    misses: Number,
+                    badCuts: Number,
+                    fullCombo: Boolean,
+                    modifiers: String,
+                    timeSet: Number
+                }
+            ]
+        }
+    ]*/
 
 /*
 

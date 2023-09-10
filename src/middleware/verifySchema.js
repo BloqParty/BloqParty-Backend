@@ -34,11 +34,25 @@ module.exports = (schema, schemaType) => (req, res, next) => {
 
         if(typeof req[schemaType][key] !== match.type) {
             notMatching[key] = {
-                expected: match.type,
-                got: typeof original,
-                value: original
+                ...notMatching[key] || {},
+                expectedType: match.type,
+                gotType: typeof original,
             }
-        } else req[schemaType][key] = original
+        };
+
+        if(Array.isArray(match.values) && !match.values.includes(req[schemaType][key])) {
+            notMatching[key] = {
+                ...notMatching[key] || {},
+                expectedValue: match.values,
+                gotValue: req[schemaType][key],
+            }
+        };
+
+        if(notMatching[key]) Object.assign(notMatching[key], {
+            value: original
+        })
+
+        req[schemaType][key] = original;
     };
 
     console.log(`verifySchema [${schemaType}]`, notMatching);

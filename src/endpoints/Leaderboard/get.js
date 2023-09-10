@@ -1,4 +1,4 @@
-const user = require('../../utils/user');
+const leaderboard = require('../../utils/leaderboard');
 
 module.exports = {
     path: `/leaderboard/:hash`,
@@ -23,6 +23,7 @@ module.exports = {
         limit: {
             type: `integer`,
             description: `Amount of scores to return. Max 50`,
+            values: Array.from(Array(50).keys()).map(a => a+1), // 1-50
             required: true,
         },
         page: {
@@ -44,7 +45,15 @@ module.exports = {
         }
     },
     get: async (req, res) => {
-        console.log(`map hash ${req.params.hash}`)
+        console.log(`map hash ${req.params.hash}`);
+
+        leaderboard.getDiff({...req.query, hash: req.params.hash}).then(data => {
+            res.send(data);
+        }).catch(e => {
+            const s = e.toString().toLowerCase().split(` `)
+
+            res.status(s.includes(`found`) ? 404 : 500).send({ error: e });
+        })
     }
 }
 
