@@ -11,6 +11,7 @@ require('./service/mongo.js').SetupMongo().then(() => {
 
     const app = express();
 
+    app.use(express.json());
     app.use((req, res, next) => {
         console.log(`[${req.method.toUpperCase()}] ${req.url}`);
         next();
@@ -38,8 +39,12 @@ require('./service/mongo.js').SetupMongo().then(() => {
         for(const endpoint of endpoints) {
             const methods = Object.entries(endpoint).filter(([k,v]) => (typeof v == `function`));
 
+            const middleware = Object.values(endpoint.middleware || {});
+
+            if(endpoint.body) middleware.push(require(`./middleware/verifyBody.js`)(endpoint.body));
+
             for(const method of methods) {
-                app[method[0]](endpoint.path, method[1]);
+                app[method[0]](endpoint.path, ...middleware, method[1]);
                 console.log(`| [${category}] [${method[0].toUpperCase()}] ${endpoint.path}`);
             }
         };
