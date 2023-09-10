@@ -37,7 +37,8 @@ require('./service/mongo.js').SetupMongo().then(() => {
 
             const middleware = Object.values(endpoint.middleware || {});
 
-            if(endpoint.body) middleware.push(require(`./middleware/verifyBody.js`)(endpoint.body));
+            //if(endpoint.body) middleware.push(require(`./middleware/verifyBody.js`)(endpoint.body));
+            if(endpoint.body) middleware.push(require(`./middleware/verifySchema.js`)(endpoint.body, `body`));
             if(endpoint.query) middleware.push(require(`./middleware/verifySchema.js`)(endpoint.query, `query`));
             if(endpoint.params) middleware.push(require(`./middleware/verifySchema.js`)(endpoint.params, `params`));
 

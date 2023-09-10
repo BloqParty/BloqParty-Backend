@@ -4,9 +4,18 @@ module.exports = {
     path: `/user/create`,
     description: `Gets the permanent API key of a specific user [requires website key]`,
     body: {
-        username: `string`,
-        discordID: `string`,
-        gameID: `string`,
+        username: {
+            type: `string`,
+            required: true,
+        },
+        discordID: {
+            type: `string`,
+            required: true,
+        },
+        gameID: {
+            type: `string`,
+            required: true,
+        },
     },
     middleware: {
         websiteKey: require(`../../middleware/websiteKey`)({

@@ -3,6 +3,16 @@ const pkg = require(`../../package.json`);
 
 const log = (str) => console.log(`[SWAGGER] ${str}`);
 
+const mapSchema = (type) => ([name, o]) => ({
+    name,
+    description: `${o.description}` + (o.values ? `\n(must be one of: \`${o.values.join(`\`, \``)}\`)` : ``),
+    in: type,
+    required: Boolean(o.required),
+    schema: {
+        type: o.type
+    }
+})
+
 module.exports = ({ port }) => new Promise(async res => {
     log("Generating swagger JSON");
 
@@ -57,24 +67,9 @@ module.exports = ({ port }) => new Promise(async res => {
                         }
                     })),
                     parameters: [
-                        ...Object.entries(endpoint.params || {}).map(([name, o]) => ({
-                            name,
-                            description: o.description + (o.values ? `\n(must be one of: \`${o.values.join(`\`, \``)}\`)` : ``),
-                            in: `path`,
-                            required: Boolean(o.required),
-                            schema: {
-                                type: o.type
-                            }
-                        })),
-                        ...Object.entries(endpoint.query || {}).map(([name, o]) => ({
-                            name,
-                            description: o.description + (o.values ? `\n(must be one of: \`${o.values.join(`\`, \``)}\`)` : ``),
-                            in: `query`,
-                            required: Boolean(o.required),
-                            schema: {
-                                type: o.type
-                            }
-                        })),
+                        ...Object.entries(endpoint.params || {}).map(mapSchema(`path`)),
+                        ...Object.entries(endpoint.query || {}).map(mapSchema(`query`)),
+                        //...Object.entries(endpoint.body || {}).map(mapSchema(`body`)),
                     ],
                     requestBody: (endpoint.body && typeof endpoint.body == `object`) ? {
                         description: `Request body`,
@@ -82,7 +77,7 @@ module.exports = ({ port }) => new Promise(async res => {
                             "application/json": {
                                 schema: {
                                     type: `object`,
-                                    example: JSON.stringify(endpoint.body, null, 4)
+                                    example: JSON.stringify(Object.entries(endpoint.body).map(o => [o[0], o[1].type]).reduce((a,b) => Object.assign(a, { [b[0]]: b[1] }), {}), null, 4)
                                 }
                             }
                         }

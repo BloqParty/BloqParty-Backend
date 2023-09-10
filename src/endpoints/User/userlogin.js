@@ -7,7 +7,10 @@ module.exports = {
         permaKey: require(`../../middleware/userPermakey`)(),
     },
     body: {
-        id: `string`,
+        id: {
+            type: `string`,
+            required: true
+        },
     },
     post: async (req, res) => {
         console.log(`logging in ${req.user.username} (fetched from permakey middleware)`);

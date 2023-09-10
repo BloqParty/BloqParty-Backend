@@ -59,11 +59,15 @@ module.exports = {
 
 module.exports.get.tests = [
     {
-        path: `/user/76561198273216952`,
-        description: `Successful user lookup`
+        path: `/leaderboard/83475886CE251C12F1C1755D15A2FE494776AE93?char=Standard&diff=5&sort=top&limit=10&page=0&id=76561198345634943`,
+        description: `Successful leaderboard lookup`
     },
     {
-        path: `/user/1`,
-        description: `Invalid user lookup`
-    }
+        path: `/leaderboard/83475886CE251C12F1C1755D15A2FE494776AE93`,
+        description: `Invalid leaderboard lookup (missing params)`
+    },
+    {
+        path: `/leaderboard/1?char=Standard&diff=5&sort=top&limit=10&page=1&id=76561198345634943`,
+        description: `Invalid leaderboard lookup (invalid map hash)`
+    },
 ]

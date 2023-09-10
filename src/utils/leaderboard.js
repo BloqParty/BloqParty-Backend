@@ -56,5 +56,78 @@ module.exports = {
                 rej(`Leaderboard not found`);
             }
         })
-    })
+    }),
+    scoreUpload: (hash, body) => {
+        const scoreObject = {
+            id: body.id,
+            multipliedScore: body.multipliedScore,
+            modifiedScore: body.modifiedScore,
+            accuracy: body.accuracy,
+            misses: body.misses,
+            badCuts: body.badCuts,
+            fullCombo: body.fullCombo,
+            modifiers: body.modifiers,
+            timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
+        }
+
+        return new Promise(async (res, rej) => {
+            try {
+                const leaderboard = await Models.leaderboards.findOne({ hash });
+
+                if(!leaderboard) {
+                    console.log(`leaderboard not found @ ${hash}, creating new one`);
+
+                    const request = await fetch(`https://api.beatsaver.com/maps/hash/${hash}`).then(a => a.json());
+
+                    if(request.error) return rej(`Leaderboard doesn't exist on BeatSaver, upload is forbidden`);
+
+                    const newLeaderboard = new Models.leaderboards({
+                        name: request.name,
+                        hash,
+                        scores: {
+                            [body.characteristic]: {
+                                [body.difficulty.toString()]: [
+                                    scoreObject
+                                ]
+                            }
+                        }
+                    });
+
+                    await newLeaderboard.save();
+
+                    res(`Created new leaderboard and uploaded score.`);
+                } else {
+                    console.log(`leaderboard found @ ${hash}, attempting upload`);
+
+                    const { scores } = leaderboard.toObject();
+
+                    // create difficulty if it doesn't exist
+                    if(!scores[body.characteristic]) scores[body.characteristic] = {};
+                    if(!scores[body.characteristic][body.difficulty.toString()]) scores[body.characteristic][body.difficulty.toString()] = [];
+
+                    const existingScore = scores[body.characteristic][body.difficulty.toString()].find(a => a.id === body.id);
+
+                    if(existingScore && existingScore.accuracy >= body.accuracy) {
+                        return rej(`Not a highscore`);
+                    } else if(existingScore) {
+                        await Models.leaderboards.updateOne({ hash }, {
+                            $pull: {
+                                [`scores.${body.characteristic}.${body.difficulty.toString()}`]: existingScore
+                            }
+                        }); // remove old score
+                    }
+
+                    await Models.leaderboards.updateOne({ hash }, {
+                        $push: {
+                            [`scores.${body.characteristic}.${body.difficulty.toString()}`]: scoreObject
+                        }
+                    });
+
+                    res(`Uploaded score.`);
+                }
+            } catch(e) {
+                rej(e);
+            }
+        })
+    }
 }

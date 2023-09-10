@@ -36,7 +36,7 @@ module.exports = (schema, schemaType) => (req, res, next) => {
             notMatching[key] = {
                 ...notMatching[key] || {},
                 expectedType: match.type,
-                gotType: typeof original,
+                gotType: `${typeof original}`,
             }
         };
 
@@ -44,7 +44,7 @@ module.exports = (schema, schemaType) => (req, res, next) => {
             notMatching[key] = {
                 ...notMatching[key] || {},
                 expectedValue: match.values,
-                gotValue: req[schemaType][key],
+                gotValue: typeof req[schemaType][key] == `undefined` ? `undefined` : req[schemaType][key],
             }
         };
 
