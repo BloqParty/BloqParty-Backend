@@ -5,7 +5,7 @@ module.exports = {
     description: `Displays a user's information`,
     params: {
         id: {
-            type: `string`,
+            type: `integer`,
             description: `The user's game ID`,
             required: true,
         }

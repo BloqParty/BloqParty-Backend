@@ -4,7 +4,7 @@ module.exports = {
     getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
         Models.leaderboard.findOne({ hash }).then(doc => {
             if(doc) {
-                const { scores } = doc.toObject();
+                const { scores } = doc;
 
                 if(Array.isArray(scores[char]?.[String(diff)])) {
 

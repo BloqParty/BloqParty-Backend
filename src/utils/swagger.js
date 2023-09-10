@@ -59,7 +59,7 @@ module.exports = ({ port }) => new Promise(async res => {
                     parameters: [
                         ...Object.entries(endpoint.params || {}).map(([name, o]) => ({
                             name,
-                            description: o.description,
+                            description: o.description + (o.values ? `\n(must be one of: \`${o.values.join(`\`, \``)}\`)` : ``),
                             in: `path`,
                             required: Boolean(o.required),
                             schema: {
@@ -68,7 +68,7 @@ module.exports = ({ port }) => new Promise(async res => {
                         })),
                         ...Object.entries(endpoint.query || {}).map(([name, o]) => ({
                             name,
-                            description: o.description,
+                            description: o.description + (o.values ? `\n(must be one of: \`${o.values.join(`\`, \``)}\`)` : ``),
                             in: `query`,
                             required: Boolean(o.required),
                             schema: {

@@ -16,7 +16,8 @@ module.exports = {
         },
         sort: {
             type: `string`,
-            description: "Map sorting type, must be `top` or `around`",
+            description: "Map sorting type.",
+            values: [`top`, `around`],
             required: true,
         },
         limit: {
