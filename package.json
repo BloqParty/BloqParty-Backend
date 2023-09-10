@@ -1,0 +1,22 @@
+{
+  "name": "buntest",
+  "module": "src/index.js",
+  "compilerOptions": {
+    "module": "CommonJS"
+  },
+  "scripts": {
+    ".": "bun run src/index.js",
+    "a": "node run src/"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0"
+  }
+}
