@@ -11,11 +11,7 @@ require('./service/mongo.js').SetupMongo().then(() => {
 
     const app = express();
 
-    app.use(express.json());
-    app.use((req, res, next) => {
-        console.log(`[${req.method.toUpperCase()}] ${req.url}`);
-        next();
-    });
+    app.use(express.json(), require(`./middleware/cors`), require(`./middleware/log`));
 
     /*app.use((req, res, next) => {
         res.sendRaw = res.send;
