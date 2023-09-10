@@ -3,6 +3,13 @@ const user = require('../../utils/user');
 module.exports = {
     path: `/user/:id`,
     description: `Displays a user's information`,
+    params: {
+        id: {
+            type: `string`,
+            description: `The user's game ID`,
+            required: true,
+        }
+    },
     get: async (req, res) => {
         console.log(`user path ${req.params.id}`)
         const usr = await user.get(req.params.id);

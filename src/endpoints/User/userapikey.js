@@ -6,6 +6,13 @@ module.exports = {
     middleware: {
         websiteKey: require(`../../middleware/websiteKey`)(),
     },
+    params: {
+        id: {
+            type: `string`,
+            description: `The user's game ID`,
+            required: true,
+        }
+    },
     post: async (req, res) => {
         console.log(`user path ${req.params.id}`)
         Models.users.findOne({ game_id: req.params.id }).then(doc => {

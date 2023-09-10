@@ -56,14 +56,26 @@ module.exports = ({ port }) => new Promise(async res => {
                             name: `Authorization`
                         }
                     })),
-                    parameters: endpoint.path.split(`/`).filter(p => p.startsWith(`:`)).map(p => ({
-                        name: p.slice(1),
-                        in: `path`,
-                        required: true,
-                        schema: {
-                            type: `integer`
-                        }
-                    })),
+                    parameters: [
+                        ...Object.entries(endpoint.params || {}).map(([name, o]) => ({
+                            name,
+                            description: o.description,
+                            in: `path`,
+                            required: Boolean(o.required),
+                            schema: {
+                                type: o.type
+                            }
+                        })),
+                        ...Object.entries(endpoint.query || {}).map(([name, o]) => ({
+                            name,
+                            description: o.description,
+                            in: `query`,
+                            required: Boolean(o.required),
+                            schema: {
+                                type: o.type
+                            }
+                        })),
+                    ],
                     requestBody: (endpoint.body && typeof endpoint.body == `object`) ? {
                         description: `Request body`,
                         content: {
@@ -74,8 +86,8 @@ module.exports = ({ port }) => new Promise(async res => {
                                 }
                             }
                         }
-                    } : {},
-                    responses: (endpoint.responses && typeof endpoint.responses == `object`) ? endpoint.responses : {}
+                    } : undefined,
+                    responses: {}
                 };
 
                 if(!func.tests) func.tests = [

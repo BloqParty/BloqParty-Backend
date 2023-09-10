@@ -4,6 +4,13 @@ const fs = require('fs').promises;
 module.exports = {
     path: `/user/:id/avatar`,
     description: `Displays a user's avatar`,
+    params: {
+        id: {
+            type: `string`,
+            description: `The user's game ID`,
+            required: true,
+        }
+    },
     get: async (req, res) => {
         const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${req.params.id}.png`)
 
