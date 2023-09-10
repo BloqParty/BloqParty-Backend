@@ -2,8 +2,7 @@ const getUser = require('../../utils/getUser')
 
 module.exports = {
     path: `/user/:id`,
-    type: `get`,
-    handle: async (req, res) => {
+    get: async (req, res) => {
         console.log(`user path ${req.params.id}`)
         const user = await getUser(req.params.id);
         console.log(`user`, user)

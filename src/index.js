@@ -24,29 +24,23 @@ require('./service/mongo.js').SetupMongo().then(() => {
         next();
     })*/
 
-    const methods = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory()).map(category => ({
+    const categories = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory()).map(category => ({
         category,
-        endpoints: fs.readdirSync(`./src/endpoints/${type}`).filter(f => f.endsWith(`.js`)).map(file => {
-            const module = require(`./endpoints/${type}/${file}`);
-
-            return {
-                ...module,
-                type: typeof app[module.type] == `function` ? module.type : `get`,
-            }
-        })
+        endpoints: fs.readdirSync(`./src/endpoints/${category}`).filter(f => f.endsWith(`.js`)).map(file => require(`./endpoints/${category}/${file}`))
     }));
 
-    console.log(`Read ${methods.length} methods (${methods.reduce((a,b) => a + b.endpoints.length, 0)} endpoints)`);
+    console.log(`Read ${categories.length} categories (${categories.reduce((a,b) => a + b.endpoints.length, 0)} endpoints)`);
 
-    for(const { category, endpoints } of methods) {
-        console.log(`Loading method ${type.toUpperCase()} (with ${endpoints.length} endpoints)`);
+    for(const { category, endpoints } of categories) {
+        console.log(`Loading group ${category.toUpperCase()} (with ${endpoints.length} endpoints)`);
 
         for(const endpoint of endpoints) {
-            console.log(`| [${type.toUpperCase()}] endpoint ${endpoint.path}`);
+            const methods = Object.entries(endpoint).filter(([k,v]) => (typeof v == `function`));
 
-            app[type](endpoint.path, endpoint.handle);
-
-            console.log(`| [${type.toUpperCase()}] Loaded endpoint ${endpoint.path}`);
+            for(const method of methods) {
+                app[method[0]](endpoint.path, method[1]);
+                console.log(`| [${category}] [${method[0].toUpperCase()}] ${endpoint.path}`);
+            }
         };
     }
 
