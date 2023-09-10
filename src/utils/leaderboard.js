@@ -29,17 +29,20 @@ module.exports = {
 
                     scores = scores.sort((a, b) => {
                         return b.accuracy - a.accuracy;
-                    });
+                    }).map((a, i) => ({
+                        ...a,
+                        position: i+1,
+                    }));
 
-                    const user_id_position = scores.findIndex(a => a.id === id);
+                    const user_id_position = scores.findIndex(a => a.id == id);
 
-                    let slice = []
-
-                    if(sort === `top`) {
-                        slice = [page * limit, (Number(page) + 1) * limit]
-                    } else if(sort === `around`) {
-                        slice = [user_id_position - Math.floor(limit/2), user_id_position + Math.ceil(limit/2)]
+                    if(sort === `around` && typeof user_id_position == `number` && user_id_position != -1) {
+                        page = Math.floor(user_id_position/limit);
                     }
+
+                    console.log(`user_id_position`, user_id_position, `page`, page, `limit`, limit, `sort`, sort);
+
+                    const slice = [ page*limit, (Number(page)+1)*limit ];
 
                     console.log(`slice`, slice);
 
