@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const fs = require('fs');
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
 
 console.log("Connecting to MongoDB");
 
@@ -42,9 +43,19 @@ require('./service/mongo.js').SetupMongo().then(() => {
                 console.log(`| [${category}] [${method[0].toUpperCase()}] ${endpoint.path}`);
             }
         };
-    }
+    };
 
-    app.listen(6969, () => {
-        console.log("Server started")
+    const PORT = 6969
+
+    app.listen(PORT, async () => {
+        console.log("Server started");
+
+        const swaggerJSON = await require('./utils/swagger.js')({ port: PORT });
+
+        console.log("Generated swagger object", swaggerJSON);
+
+        app.use(`/docs`, swaggerUi.serve, swaggerUi.setup(swaggerJSON));
+
+        console.log(`Swagger docs now available`);
     });
 });

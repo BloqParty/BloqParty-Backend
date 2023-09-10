@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 
 // process.env; MONGO_URI, DATABASE, PRIVATE_AUTH
 
-const Models = new Map();
+const Models = {}
 
 module.exports = {
     Models,
@@ -25,12 +25,10 @@ module.exports = {
     
             for(const { name, schema } of schemas) {
                 console.log(`establishing model ${name}`);
-                Models.set(name, mongoose.model(name, schema));
+                Models[name] = mongoose.model(name, schema);
             };
     
             console.log(`established models i think`);
-    
-            await Models.get('users').findOne().then(console.log);
     
             return res(Models);
         } catch (err) {
