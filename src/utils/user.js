@@ -78,7 +78,10 @@ module.exports = {
                 res(null);
             } else {
                 console.log(`user ${doc.game_id} logged in; new key: ${sessionKey}`);
-                res(doc.toObject());
+                res(Object.assign(doc.toObject(), {
+                    sessionKey,
+                    sessionKeyExpires
+                }));
             }
         });
     })
