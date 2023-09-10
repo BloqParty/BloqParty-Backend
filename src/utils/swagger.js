@@ -22,25 +22,31 @@ module.exports = ({ port }) => new Promise(async res => {
         paths: {},
     };
 
+    const pathGroups = {};
+
     const categories = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory()).map(category => ({
         category,
-        endpoints: fs.readdirSync(`./src/endpoints/${category}`).filter(f => f.endsWith(`.js`)).map(file => require(`../endpoints/${category}/${file}`))
+        endpoints: fs.readdirSync(`./src/endpoints/${category}`).filter(f => f.endsWith(`.js`)).sort().map(file => Object.assign({ name: file.split(`.`).slice(0, -1).join(`.`) }, require(`../endpoints/${category}/${file}`)))
     }));
 
     log(`Read ${categories.length} categories (${categories.reduce((a,b) => a + b.endpoints.length, 0)} endpoints)`);
 
     for(const { category, endpoints } of categories) {
+        pathGroups[category] = {};
+
         log(`Getting group ${category.toUpperCase()} (with ${endpoints.length} endpoints)`);
 
         for(const endpoint of endpoints) {
-            swaggerObj.paths[endpoint.path] = {};
+            const prettyPath = endpoint.path.split(`/`).map(p => p.startsWith(`:`) ? `{${p.slice(1)}}` : p).join(`/`);
+
+            pathGroups[category][prettyPath] = {};
 
             for(const [ method, func ] of Object.entries(endpoint).filter(([k,v]) => (typeof v == `function`))) {
-                swaggerObj.paths[endpoint.path][method] = {
+                pathGroups[category][prettyPath][method] = {
                     tags: [ category ],
                     description: endpoint.description,
                     parameters: endpoint.path.split(`/`).filter(p => p.startsWith(`:`)).map(p => ({
-                        name: p,
+                        name: p.slice(1),
                         in: `path`,
                         required: true,
                         schema: {
@@ -77,7 +83,7 @@ module.exports = ({ port }) => new Promise(async res => {
                                 schemaType = `object`;
                             } catch(e) {}
         
-                            swaggerObj.paths[endpoint.path][method].responses[response.status] = {
+                            pathGroups[category][prettyPath][method].responses[response.status] = {
                                 description: test.description || response.statusText,
                                 content: {
                                     [contentType]: {
@@ -99,6 +105,15 @@ module.exports = ({ port }) => new Promise(async res => {
             }
         };
     };
+
+    for(const [ name, entries ] of Object.keys(pathGroups).sort().map(k => [ k, pathGroups[k] ])) {
+        console.log(`Adding ${Object.keys(entries).length} entries from ${name}`);
+
+        swaggerObj.paths = {
+            ...swaggerObj.paths,
+            ...entries
+        }
+    }
 
     return res(swaggerObj);
 })
