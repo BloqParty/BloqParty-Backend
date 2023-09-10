@@ -1,5 +1,7 @@
 {
-  "name": "buntest",
+  "name": "Bedroom Party API",
+  "description": "API for the Bedroom Party leaderboards",
+  "version": "1.0.0",
   "module": "src/index.js",
   "compilerOptions": {
     "module": "CommonJS"
