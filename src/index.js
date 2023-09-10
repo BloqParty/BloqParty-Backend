@@ -24,14 +24,21 @@ require('./service/mongo.js').SetupMongo().then(() => {
         next();
     })*/
 
-    const methods = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory() && typeof app[type] == `function`).map(type => ({
-        type,
-        endpoints: fs.readdirSync(`./src/endpoints/${type}`).filter(f => f.endsWith(`.js`)).map(file => require(`./endpoints/${type}/${file}`))
+    const methods = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory()).map(category => ({
+        category,
+        endpoints: fs.readdirSync(`./src/endpoints/${type}`).filter(f => f.endsWith(`.js`)).map(file => {
+            const module = require(`./endpoints/${type}/${file}`);
+
+            return {
+                ...module,
+                type: typeof app[module.type] == `function` ? module.type : `get`,
+            }
+        })
     }));
 
     console.log(`Read ${methods.length} methods (${methods.reduce((a,b) => a + b.endpoints.length, 0)} endpoints)`);
 
-    for(const { type, endpoints } of methods) {
+    for(const { category, endpoints } of methods) {
         console.log(`Loading method ${type.toUpperCase()} (with ${endpoints.length} endpoints)`);
 
         for(const endpoint of endpoints) {
