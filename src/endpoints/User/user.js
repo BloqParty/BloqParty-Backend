@@ -1,12 +1,13 @@
-const getUser = require('../../utils/getUser')
+const user = require('../../utils/user');
 
 module.exports = {
     path: `/user/:id`,
+    description: `Displays a user's information`,
     get: async (req, res) => {
         console.log(`user path ${req.params.id}`)
-        const user = await getUser(req.params.id);
-        if(user) {
-            res.send(user);
+        const usr = await user.get(req.params.id);
+        if(usr) {
+            res.send(usr);
         } else {
             res.status(404).send({ error: `User not found` });
         }
