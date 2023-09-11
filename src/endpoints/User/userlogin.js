@@ -1,8 +1,9 @@
 const user = require('../../utils/user');
+const strip = require(`../../utils/strip`);
 
 module.exports = {
     path: `/user/login`,
-    description: `Gets the permanent API key of a specific user [requires user's API key]`,
+    description: `Gets the permanent API key of a specific user [requires user's API key]\n\n"session" body key is optional, but defaults to true for mods logging in if not provided`,
     middleware: {
         permaKey: require(`../../middleware/userPermakey`)(),
     },
@@ -11,21 +12,31 @@ module.exports = {
             type: `string`,
             required: true
         },
+        session: {
+            type: `boolean`,
+            required: false,
+            default: true,
+        },
     },
     post: async (req, res) => {
-        console.log(`logging in ${req.user.username} (fetched from permakey middleware)`);
-        user.login(req.user.apiKey).then(usr => {
-            if(usr.sessionKey) {
-                res.send({
-                    sessionKey: usr.sessionKey,
-                })
-            } else {
-                res.status(500).send({
-                    error: `Internal server error -- session key wasn't returned?`
-                });
-                console.log(`[userlogin] session key wasn't returned?`, usr);
-            }
-        })
+        if(req.body.session) {
+            console.log(`logging in ${req.user.username} with new session (fetched from permakey middleware)`);
+            user.login(req.user.apiKey).then(usr => {
+                if(usr.sessionKey) {
+                    res.send({
+                        sessionKey: usr.sessionKey,
+                    })
+                } else {
+                    res.status(500).send({
+                        error: `Internal server error -- session key wasn't returned?`
+                    });
+                    console.log(`[userlogin] session key wasn't returned?`, usr);
+                }
+            })
+        } else {
+            console.log(`logging in ${req.user.username} WITHOUT new session (fetched from permakey middleware)`);
+            res.send(strip(req.user));
+        }
     }
 }
 
