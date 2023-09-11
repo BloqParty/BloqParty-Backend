@@ -49,7 +49,7 @@ require('./service/mongo.js').SetupMongo().then(() => {
         };
     };
 
-    const PORT = 6969
+    const PORT = 9999
 
     app.listen(PORT, async () => {
         console.log("Server started");
