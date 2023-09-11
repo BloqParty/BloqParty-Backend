@@ -29,10 +29,12 @@ module.exports = {
                             fetch(json.response.players[0].avatarfull)
                                 .then(res => res.arrayBuffer())
                                 .then(buffer => {
-                                    fs.writeFile(`./src/extras/Users/Avatars/${gameID}.png`, Buffer.from(buffer), () => {
-                                        console.log(`wrote avatar for ${gameID}`);
-                                        res(`https://api.thebedroom.party/user/${gameID}/avatar`);
-                                    });
+                                    fs.promises.mkdir(path.dirname(`./src/extras/Users/Avatars/${gameID}.png`), { recursive: true }).catch(() => {}).then(() => {
+                                        fs.writeFile(`./src/extras/Users/Avatars/${gameID}.png`, Buffer.from(buffer), () => {
+                                            console.log(`wrote avatar for ${gameID}`);
+                                            res(`https://api.thebedroom.party/user/${gameID}/avatar`);
+                                        });
+                                    })
                                 })
                                 .catch(e => {
                                     console.error(`failed getting steam avi [2]`, e);
