@@ -23,14 +23,15 @@ module.exports = {
             console.log(`logging in ${req.user.username} with new session (fetched from permakey middleware)`);
             user.login(req.user.apiKey).then(usr => {
                 if(usr.sessionKey) {
-                    res.send({
+                    res.send(Object.assign(strip(usr), {
                         sessionKey: usr.sessionKey,
-                    })
+                        sessionKeyExpires: usr.sessionKeyExpires,
+                    }));
                 } else {
+                    console.log(`[userlogin] session key wasn't returned?`, usr);
                     res.status(500).send({
                         error: `Internal server error -- session key wasn't returned?`
                     });
-                    console.log(`[userlogin] session key wasn't returned?`, usr);
                 }
             })
         } else {
