@@ -1,5 +1,5 @@
 module.exports = (doc) => {
-    const o = doc.toObject ? doc.toObject() : doc;
+    const o = Object.assign({}, doc.toObject ? doc.toObject() : doc);
 
     delete o._id
     delete o.apiKey
