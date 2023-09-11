@@ -12,7 +12,11 @@ module.exports = {
         }
     },
     get: async (req, res) => {
-        const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${req.params.id}.png`)
+        const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${req.params.id}.png`);
+
+        console.log(`imgPath`, imgPath);
+
+        await fs.mkdir(path.dirname(imgPath), { recursive: true }).catch(() => {});
 
         const exists = await fs.access(imgPath).then(() => true).catch(() => false);
 
