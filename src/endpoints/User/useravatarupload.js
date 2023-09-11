@@ -4,6 +4,9 @@ const fs = require('fs').promises;
 module.exports = {
     path: `/user/:id/avatar/upload`,
     description: `Displays a user's avatar`,
+    middleware: {
+        permaKey: require(`../../middleware/websiteKey`)(),
+    },
     params: {
         id: {
             type: `integer`,
