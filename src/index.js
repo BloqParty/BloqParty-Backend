@@ -1,10 +1,11 @@
+const os = require('os');
 const http = require('http');
 const httpProxy = require('http-proxy');
 const thread = require(`./balancer/thread`);
 
 const PORT = 9999;
 
-const threadCount = parseInt(process.argv[2]) || 2;
+const threadCount = parseInt(process.argv[2]) || os.cpus().length;
 console.log(`Starting ${threadCount} threads (received: ${process.argv[2]})`);
 
 const threads = {};
@@ -25,7 +26,7 @@ for(const port of Array.from(Array(threadCount).keys()).map(a => a+1+PORT)) awai
 const threadKeys = Object.keys(threads);
 const proxyServer = httpProxy.createProxyServer({});
 
-console.log(`Started ${threadKeys} threads; creating proxy`);
+console.log(`Started ${threadKeys.length} threads (ports ${threadKeys.join(`, `)}); creating proxy`);
 
 http.createServer((req, res) => {
     let thisThread = threadUsed++;
