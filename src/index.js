@@ -3,7 +3,6 @@ const http = require('http');
 const express = require('express');
 const superagent = require('superagent');
 const swaggerUi = require('swagger-ui-express');
-const httpProxy = require('http-proxy');
 const thread = require(`./balancer/thread`);
 const swagger = require(`./utils/swagger`)
 
@@ -42,19 +41,8 @@ for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) =>
 });
 
 const threadKeys = Object.keys(threads);
-const proxyServer = httpProxy.createProxyServer({});
 
 console.log(`Started ${threadKeys.length} threads (ports ${threadKeys.join(`, `)}); creating proxy`);
-
-proxyServer.on(`error`, (err, req, res) => {
-    console.error(`Proxy error:`, err);
-
-    res.writeHead(500, {
-        'Content-Type': 'text/plain'
-    });
-
-    res.end(`Something went wrong. Please try again later.`);
-});
 
 const methodsWithBody = [`POST`, `PUT`, `PATCH`];
 
