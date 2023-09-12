@@ -1,65 +1,41 @@
-require('dotenv').config();
+const http = require('http');
+const httpProxy = require('http-proxy');
+const thread = require(`./balancer/thread`);
 
-const fs = require('fs');
-const express = require('express');
-const swaggerUi = require('swagger-ui-express');
+const PORT = 9999;
 
-console.log("Connecting to MongoDB");
+const threadCount = parseInt(process.argv[2]) || 2;
+console.log(`Starting ${threadCount} threads (received: ${process.argv[2]})`);
 
-require('./service/mongo.js').SetupMongo().then(() => {
-    console.log("Starting server");
+const threads = {};
+let threadUsed = 0;
 
-    const app = express();
+for(const port of Array.from(Array(threadCount).keys()).map(a => a+1+PORT)) await new Promise(async res => {
+    console.log(`Starting thread ${port}`);
 
-    app.use(express.json(), require(`./middleware/cors`), require(`./middleware/log`));
+    const data = await thread(`./thread.js`, { PORT: port });
 
-    /*app.use((req, res, next) => {
-        res.sendRaw = res.send;
-        res.send = (raw) => {
-            const data = typeof raw == `object` ? Object.assign(raw, { status: Number(raw.status) || 200 }) : raw;
-            res.status(data.status || 200).sendRaw(data);
-        };
-        next();
-    })*/
+    threads[port] = data;
 
-    const categories = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory()).map(category => ({
-        category,
-        endpoints: fs.readdirSync(`./src/endpoints/${category}`).filter(f => f.endsWith(`.js`)).map(file => require(`./endpoints/${category}/${file}`))
-    }));
+    console.log(`Started thread ${port}`);
 
-    console.log(`Read ${categories.length} categories (${categories.reduce((a,b) => a + b.endpoints.length, 0)} endpoints)`);
+    res();
+});
 
-    for(const { category, endpoints } of categories) {
-        console.log(`Loading group ${category.toUpperCase()} (with ${endpoints.length} endpoints)`);
+const threadKeys = Object.keys(threads);
+const proxyServer = httpProxy.createProxyServer({});
 
-        for(const endpoint of endpoints) {
-            const methods = Object.entries(endpoint).filter(([k,v]) => (typeof v == `function`));
+console.log(`Started ${threadKeys} threads; creating proxy`);
 
-            const middleware = Object.values(endpoint.middleware || {});
+http.createServer((req, res) => {
+    let thisThread = threadUsed++;
+    if(!threadKeys[thisThread]) thisThread = threadUsed = 0;
 
-            //if(endpoint.body) middleware.push(require(`./middleware/verifyBody.js`)(endpoint.body));
-            if(endpoint.body) middleware.push(require(`./middleware/verifySchema.js`)(endpoint.body, `body`));
-            if(endpoint.query) middleware.push(require(`./middleware/verifySchema.js`)(endpoint.query, `query`));
-            if(endpoint.params) middleware.push(require(`./middleware/verifySchema.js`)(endpoint.params, `params`));
+    const port = threadKeys[thisThread];
 
-            for(const method of methods) {
-                app[method[0]](endpoint.path, ...middleware, method[1]);
-                console.log(`| [${category}] [${method[0].toUpperCase()}] ${endpoint.path}`);
-            }
-        };
-    };
+    console.log(`Proxying to port ${port}`);
 
-    const PORT = 9999
-
-    app.listen(PORT, async () => {
-        console.log("Server started");
-
-        const swaggerJSON = await require('./utils/swagger.js')({ port: PORT });
-
-        console.log("Generated swagger object", swaggerJSON);
-
-        app.use(`/docs`, swaggerUi.serve, swaggerUi.setup(swaggerJSON));
-
-        console.log(`Swagger docs now available`);
-    });
+    proxyServer.web(req, res, { target: `http://localhost:${port}` });
+}).listen(PORT, () => {
+    console.log(`Started proxy on port ${PORT}`);
 });
