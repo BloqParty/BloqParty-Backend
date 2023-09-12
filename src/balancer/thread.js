@@ -3,7 +3,15 @@ const path = require(`path`);
 module.exports = (relPath, workerData) => new Promise(async res => {
     console.log(`Starting worker ${relPath}`, workerData);
 
-    const obj = {};
+    const obj = {
+        setDocs: (docs) => {
+            obj.swagger = docs;
+            if(obj.worker) obj.worker.postMessage({
+                type: `swagger`,
+                value: obj.swagger
+            });
+        }
+    };
 
     while(true) await new Promise(async r => {
         obj.worker = new Worker(path.resolve(__dirname, `..`, relPath), {
@@ -16,9 +24,19 @@ module.exports = (relPath, workerData) => new Promise(async res => {
             console.log(`Worker message`, data);
 
             if(data.type == `init`) {
-                obj.worker.postMessage(workerData);
+                obj.worker.postMessage({
+                    type: `init`,
+                    value: workerData
+                });
             } else if(data.type == `ready`) {
+                console.log(`Worker ready`);
                 res(obj);
+                if(obj.swagger) {
+                    obj.worker.postMessage({
+                        type: `swagger`,
+                        value: obj.swagger
+                    });
+                }
             }
         });
 
@@ -28,7 +46,7 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         });
 
         obj.worker.addEventListener(`error`, e => {
-            console.log(`Worker errored (${e.message})`);
+            console.log(`Worker errored`, e);
             r();
         });
 

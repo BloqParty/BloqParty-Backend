@@ -1,18 +1,19 @@
 require('dotenv').config();
-
-self.onmessage = async ({ data }) => {
-    const { PORT } = data;
     
-    const fs = require('fs');
-    const express = require('express');
-    const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const express = require('express');
+
+const app = express();
+
+self.addEventListener(`message`, async ({ data: { type, value: data } }) => {
+    if(type != `init`) return;
+
+    const { PORT } = data;
     
     console.log("Connecting to MongoDB");
     
     require('./service/mongo.js').SetupMongo().then(async () => {
         console.log("Starting server");
-    
-        const app = express();
     
         app.use(express.json(), require(`./middleware/cors.js`), require(`./middleware/log.js`));
     
@@ -69,19 +70,11 @@ self.onmessage = async ({ data }) => {
             process.exit(1);
         });
     
-        const swaggerJSON = await require('./utils/swagger.js')({ port: PORT });
-    
-        console.log("Generated swagger object", swaggerJSON);
-    
-        app.use(`/docs`, swaggerUi.serve, swaggerUi.setup(swaggerJSON));
-    
-        console.log(`Swagger docs now available`);
-    
         console.log(`Listening on port ${PORT}`);
     
         if(typeof postMessage == `function`) postMessage({ type: `ready`, port: PORT });
     });
-};
+});
 
 console.log(`Thread initialized; posting init`);
 
