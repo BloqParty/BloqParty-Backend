@@ -17,15 +17,6 @@ self.addEventListener(`message`, async ({ data: { type, value: data } }) => {
     
         app.use(express.json(), require(`./middleware/cors.js`), require(`./middleware/log.js`));
     
-        /*app.use((req, res, next) => {
-            res.sendRaw = res.send;
-            res.send = (raw) => {
-                const data = typeof raw == `object` ? Object.assign(raw, { status: Number(raw.status) || 200 }) : raw;
-                res.status(data.status || 200).sendRaw(data);
-            };
-            next();
-        })*/
-    
         const categories = fs.readdirSync(`./src/endpoints`).filter(type => fs.statSync(`./src/endpoints/${type}`).isDirectory()).map(category => ({
             category,
             endpoints: fs.readdirSync(`./src/endpoints/${category}`).filter(f => f.endsWith(`.js`)).map(file => require(`./endpoints/${category}/${file}`))
