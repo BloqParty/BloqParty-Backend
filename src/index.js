@@ -1,10 +1,9 @@
 const os = require('os');
 const http = require('http');
 const express = require('express');
-const superagent = require('superagent');
 const swaggerUi = require('swagger-ui-express');
 const thread = require(`./balancer/thread`);
-const swagger = require(`./utils/swagger`)
+const swagger = require(`./utils/swagger`);
 
 const PORT = 9999;
 
@@ -48,12 +47,19 @@ const methodsWithBody = [`POST`, `PUT`, `PATCH`];
 
 const app = express();
 const server = http.createServer(async (req, res) => {
+    const timeStr = `[PROXY] ${req.url}`
+
+    console.time(timeStr);
+
+    res.on(`finish`, () => console.timeEnd(timeStr));
+
     if(req.url.startsWith(`/docs`)) {
-        return app(req, res);
+        app(req, res);
     } else {
         let thisThread = threadUsed++;
+        if(!threadKeys[threadUsed]) threadUsed = 0;
     
-        const port = threadKeys[thisThread] || threadKeys[thisThread = threadUsed = 0];
+        const port = threadKeys[thisThread];
 
         console.log(`Proxying ${req.url.split(`?`)[0]} to port ${port}`);
 
@@ -68,6 +74,7 @@ const server = http.createServer(async (req, res) => {
                         data = JSON.parse(data);
                         req.body = data;
                         console.log(`[BODY] parsed`);
+                        console.timeStamp(timeStr);
                         res();
                     } catch(e) {
                         console.log(`[BODY] ${data.length}...`);
@@ -76,15 +83,24 @@ const server = http.createServer(async (req, res) => {
             });
         });
 
-        const request = superagent[req.method.toLowerCase()](`http://localhost:${port}` + req.url)
-        
-        if(req.body) request.send(req.body);
-        if(req.headers) request.set(req.headers);
-        
-        request.then(response => {
-            res.writeHead((response.statusCode || response.status), response.headers);
-            res.end(response.text);
+        const newReq = http.request(`http://localhost:${port}` + req.url, {
+            method: req.method,
+            headers: req.headers
+        }, response => {
+            res.writeHead(response.statusCode, response.headers);
+
+            let data = Buffer.alloc(0);
+
+            response.on(`data`, chunk => {
+                data = Buffer.concat([data, chunk]);
+            });
+
+            response.on(`end`, () => res.end(data));
         });
+
+        console.timeStamp(timeStr);
+
+        newReq.end(JSON.stringify(req.body));
     }
 });
 
