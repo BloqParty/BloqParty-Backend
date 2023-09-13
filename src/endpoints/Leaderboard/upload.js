@@ -45,6 +45,30 @@ module.exports = {
             type: `string`,
             required: true,
         },
+        pauses: {
+            type: `integer`,
+            required: true,
+        },
+        avgHandAccRight: {
+            type: `number`,
+            required: true,
+        },
+        avgHandAccLeft: {
+            type: `number`,
+            required: true,
+        },
+        avgHandTDRight: {
+            type: `number`,
+            required: true,
+        },
+        avgHandTDLeft: {
+            type: `number`,
+            required: true,
+        },
+        perfectStreak: {
+            type: `integer`,
+            required: true,
+        },
     },
     post: async (req, res) => {
         console.log(`map hash ${req.params.hash}`);

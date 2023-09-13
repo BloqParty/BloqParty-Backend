@@ -85,6 +85,12 @@ module.exports = {
             badCuts: body.badCuts,
             fullCombo: body.fullCombo,
             modifiers: body.modifiers,
+            pauses: body.pauses,
+            avgHandAccRight: body.avgHandAccRight,
+            avgHandAccLeft: body.avgHandAccLeft,
+            avgHandTDRight: body.avgHandTDRight,
+            avgHandTDLeft: body.avgHandTDLeft,
+            perfectStreak: body.perfectStreak,
             timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
         }
 

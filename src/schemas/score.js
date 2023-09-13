@@ -2,6 +2,7 @@ const { Schema, model } = require('mongoose');
 
 module.exports = new Schema({
     id: String,
+    timeSet: Number,
     multipliedScore: Number,
     modifiedScore: Number,
     accuracy: Number,
@@ -9,5 +10,10 @@ module.exports = new Schema({
     badCuts: Number,
     fullCombo: Boolean,
     modifiers: String,
-    timeSet: Number,
+    pauses: Number,
+    avgHandAccRight: Number,
+    avgHandAccLeft: Number,
+    avgHandTDRight: Number,
+    avgHandTDLeft: Number,
+    perfectStreak: Number,
 })
