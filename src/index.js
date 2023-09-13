@@ -67,10 +67,12 @@ const server = http.createServer(async (req, res) => {
             let data = ``;
 
             req.on(`end`, () => {
-                console.log(`[BODY] req body ended before data was parsed!`);
-                data = null;
-                console.timeStamp(timeStr);
-                res();
+                if(typeof data == `string`) {
+                    console.log(`[BODY] req body ended before data was parsed!`);
+                    data = null;
+                    console.timeStamp(timeStr);
+                    res();
+                }
             });
 
             req.on(`data`, chunk => {
