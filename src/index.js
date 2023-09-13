@@ -66,6 +66,13 @@ const server = http.createServer(async (req, res) => {
         if(methodsWithBody.includes(req.method.toUpperCase())) await new Promise(async res => {
             let data = ``;
 
+            req.on(`end`, () => {
+                console.log(`[BODY] req body ended before data was parsed!`);
+                data = null;
+                console.timeStamp(timeStr);
+                res();
+            });
+
             req.on(`data`, chunk => {
                 if(typeof data == `string`) {
                     data += chunk.toString();
