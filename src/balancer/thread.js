@@ -13,6 +13,8 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         }
     };
 
+    let resolved = false;
+
     while(true) await new Promise(async r => {
         obj.worker = new Worker(path.resolve(__dirname, `..`, relPath), {
             ref: true
@@ -30,7 +32,12 @@ module.exports = (relPath, workerData) => new Promise(async res => {
                 });
             } else if(data.type == `ready`) {
                 console.log(`Worker ready`);
-                res(obj);
+
+                if(!resolved) {
+                    resolved = true;
+                    res(obj);
+                }
+                
                 if(obj.swagger) {
                     obj.worker.postMessage({
                         type: `swagger`,
@@ -46,7 +53,7 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         });
 
         obj.worker.addEventListener(`error`, e => {
-            console.log(`Worker errored`, e);
+            console.log(`Worker errored\n${e.message}`);
             r();
         });
 

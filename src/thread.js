@@ -72,7 +72,10 @@ self.addEventListener(`message`, async ({ data: { type, value: data } }) => {
     
         console.log(`Listening on port ${PORT}`);
     
-        if(typeof postMessage == `function`) postMessage({ type: `ready`, port: PORT });
+        if(typeof postMessage == `function`) {
+            console.log(`Posting ready`);
+            postMessage({ type: `ready`, port: PORT });
+        }
     });
 });
 
