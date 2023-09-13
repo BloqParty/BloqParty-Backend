@@ -22,12 +22,12 @@ module.exports = {
         }
     },
     post: async (req, res) => {
-        const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${req.params.id}.png`)
+        const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${req.params.id}.png`);
 
-        fs.writeFile(imgPath, Buffer.from(req.body.avatar, `base64`)).then(() => {
+        Bun.write(imgPath, Buffer.from(req.body.avatar, `base64`)).then(() => {
             res.send({ success: true });
         }).catch(e => {
             res.status(500).send({ error: e });
-        })
+        });
     }
 }

@@ -16,12 +16,14 @@ module.exports = {
 
         console.log(`imgPath`, imgPath);
 
-        await fs.mkdir(path.dirname(imgPath), { recursive: true }).catch(() => {});
+        const file = Bun.file(imgPath);
 
-        const exists = await fs.access(imgPath).then(() => true).catch(() => false);
+        if(file.size) {
+            res.setHeader(`Content-Type`, file.type);
 
-        if(exists) {
-            res.sendFile(imgPath);
+            const stream = await file.arrayBuffer();
+
+            res.send(Buffer.from(stream));
         } else {
             res.status(404).send({ error: `Avatar not found` });
         }
