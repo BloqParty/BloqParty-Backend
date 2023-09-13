@@ -58,7 +58,7 @@ const server = http.createServer(async (req, res) => {
     if(req.url.startsWith(`/docs`)) {
         app(req, res);
     } else if(req.url == `/pullAndRestart` && req.headers.authorization == process.env.PRIVATE_AUTH) {
-        require(`./utils/update`).then(result => {
+        require(`./utils/update`)().then(result => {
             if(result == true) {
                 res.statusCode = 200;
                 res.end(`ok`);
