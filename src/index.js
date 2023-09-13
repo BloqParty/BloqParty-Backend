@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const os = require('os');
 const http = require('http');
 const express = require('express');
@@ -55,6 +57,17 @@ const server = http.createServer(async (req, res) => {
 
     if(req.url.startsWith(`/docs`)) {
         app(req, res);
+    } else if(req.url == `/pullAndRestart` && req.headers.authorization == process.env.PRIVATE_AUTH) {
+        require(`./utils/update`).then(result => {
+            if(result == true) {
+                res.statusCode = 200;
+                res.end(`ok`);
+                process.exit(0);
+            } else {
+                res.statusCode = 500;
+                res.end(`no commits found`);
+            }
+        })
     } else {
         let thisThread = threadUsed++;
         if(!threadKeys[threadUsed]) threadUsed = 0;
