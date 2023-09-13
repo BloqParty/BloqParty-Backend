@@ -17,6 +17,23 @@ module.exports = {
             } else rej(`Leaderboard not found`)
         })
     }),
+    getScoreCount: (hash) => new Promise(async (res, rej) => {
+        Models.leaderboards.findOne({ hash }).then(doc => {
+            if(doc) {
+                const { scores } = strip(doc);
+
+                const obj = Object.entries(scores).map(([ char, diff ]) => ({
+                    [char]: Object.entries(diff).map(([ diff, scores ]) => ({
+                        diff: scores.length
+                    })).reduce((a,b) => ({ ...a, ...b }), {})
+                })).reduce((a,b) => ({ ...a, ...b }), {});
+
+                console.log(`overview of ${hash}`, obj);
+
+                res(obj);
+            } else rej(`Leaderboard not found`)
+        })
+    }),
     getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
         Models.leaderboards.findOne({ hash }).then(doc => {
             if(doc) {
