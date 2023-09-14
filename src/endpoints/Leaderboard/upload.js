@@ -3,6 +3,9 @@ const leaderboard = require('../../utils/leaderboard');
 module.exports = {
     path: `/leaderboard/:hash/upload`,
     description: `Uploads score to leaderboard`,
+    middleware: {
+        userSessionKey: require(`../../middleware/userSessionKey`)(),
+    },
     body: {
         difficulty: {
             type: `integer`,
