@@ -25,7 +25,7 @@ module.exports = ({
             console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.game_id}), but sessionKey expired ${time(Date.now() - req.user.sessionKeyExpires).string} ago`);
             res.status(useCode).send(message);
         } else {
-            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.game_id}), sessionKey matches (${req.user.sessionKey.slice(0, 8)}..., ${req.headers.authorization.slice(0, 8)}...) and expires in ${time(Date.now() - req.user.sessionKeyExpires).string}`);
+            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.game_id}), sessionKey matches (${req.user.sessionKey.slice(0, 8)}..., ${req.headers.authorization.slice(0, 8)}...) and expires in ${time(req.user.sessionKeyExpires - Date.now()).string}`);
             next();
         }
     });
