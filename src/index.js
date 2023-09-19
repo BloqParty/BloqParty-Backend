@@ -18,7 +18,7 @@ let swaggerObj = new Promise(res => {
 const threads = {};
 let threadUsed = 0;
 
-for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) => ([a+1+process.env.PORT, i]))) await new Promise(async res => {
+for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) => ([a+1+parseInt(process.env.PORT), i]))) await new Promise(async res => {
     console.log(`Starting thread ${port}`);
 
     const data = await thread(`./thread.js`, { PORT: port });
@@ -131,6 +131,6 @@ swaggerObj.then(json => {
     }, swaggerUi.serve, swaggerUi.setup(json));
 });
 
-server.listen(process.env.PORT, () => {
-    console.log(`Started proxy on port ${process.env.PORT}`);
+server.listen(parseInt(process.env.PORT), () => {
+    console.log(`Started proxy on port ${parseInt(process.env.PORT)}`);
 });
