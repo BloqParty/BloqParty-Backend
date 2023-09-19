@@ -4,6 +4,8 @@ module.exports = ({
         error: `Unauthorized.`
     }
 }={}) => (req, res, next) => {
+    const useCode = Number(code) || 401;
+
     const matches = req.headers.authorization === process.env.PRIVATE_AUTH
 
     console.log(`websiteKey: ${matches}`);
@@ -11,6 +13,6 @@ module.exports = ({
     if(matches) {
         next();
     } else {
-        res.status(code).send(message);
+        res.status(useCode).send(message);
     }
 }
