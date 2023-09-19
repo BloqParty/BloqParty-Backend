@@ -7,8 +7,6 @@ const swaggerUi = require('swagger-ui-express');
 const thread = require(`./balancer/thread`);
 const swagger = require(`./utils/swagger`);
 
-const PORT = 9999;
-
 const threadCount = parseInt(process.argv[2]) || os.cpus().length;
 console.log(`Starting ${threadCount} threads (received: ${process.argv[2]})`);
 
@@ -20,7 +18,7 @@ let swaggerObj = new Promise(res => {
 const threads = {};
 let threadUsed = 0;
 
-for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) => ([a+1+PORT, i]))) await new Promise(async res => {
+for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) => ([a+1+process.env.PORT, i]))) await new Promise(async res => {
     console.log(`Starting thread ${port}`);
 
     const data = await thread(`./thread.js`, { PORT: port });
@@ -133,6 +131,6 @@ swaggerObj.then(json => {
     }, swaggerUi.serve, swaggerUi.setup(json));
 });
 
-server.listen(PORT, () => {
-    console.log(`Started proxy on port ${PORT}`);
+server.listen(process.env.PORT, () => {
+    console.log(`Started proxy on port ${process.env.PORT}`);
 });

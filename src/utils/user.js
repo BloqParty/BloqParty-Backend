@@ -2,6 +2,7 @@ const { Models } = require(`../service/mongo`);
 const crypto = require('crypto');
 const fs = require('fs');
 const strip = require(`./strip`);
+const path = require('path');
 
 module.exports = {
     get: (game_id) => new Promise(async res => {
