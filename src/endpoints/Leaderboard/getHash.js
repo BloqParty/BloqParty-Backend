@@ -1,7 +1,7 @@
 const leaderboard = require('../../utils/leaderboard');
 
 module.exports = {
-    path: `/leaderboard/:hash`,
+    path: `/leaderboard/hash/:hash`,
     description: `Gets posted scores from a specific map hash`,
     query: {
         char: {
@@ -47,7 +47,7 @@ module.exports = {
     get: async (req, res) => {
         console.log(`map hash ${req.params.hash}`);
 
-        leaderboard.getDiff({...req.query, hash: req.params.hash}).then(data => {
+        leaderboard.getDiffHash({...req.query, hash: req.params.hash}).then(data => {
             res.send(data);
         }).catch(e => {
             const s = e.toString().toLowerCase().split(` `)
@@ -59,15 +59,15 @@ module.exports = {
 
 module.exports.get.tests = [
     {
-        path: `/leaderboard/83475886CE251C12F1C1755D15A2FE494776AE93?char=Standard&diff=5&sort=top&limit=10&page=0&id=76561198345634943`,
+        path: `/leaderboard/hash/83475886CE251C12F1C1755D15A2FE494776AE93?char=Standard&diff=5&sort=top&limit=10&page=0&id=76561198345634943`,
         description: `Successful leaderboard lookup`
     },
     {
-        path: `/leaderboard/83475886CE251C12F1C1755D15A2FE494776AE93`,
+        path: `/leaderboard/hash/83475886CE251C12F1C1755D15A2FE494776AE93`,
         description: `Invalid leaderboard lookup (missing params)`
     },
     {
-        path: `/leaderboard/1?char=Standard&diff=5&sort=top&limit=10&page=1&id=76561198345634943`,
+        path: `/leaderboard/hash/1?char=Standard&diff=5&sort=top&limit=10&page=1&id=76561198345634943`,
         description: `Invalid leaderboard lookup (invalid map hash)`
     },
 ]

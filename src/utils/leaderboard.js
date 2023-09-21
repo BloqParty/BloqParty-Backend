@@ -34,8 +34,66 @@ module.exports = {
             } else rej(`Leaderboard not found`)
         })
     }),
-    getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
+    getDiffHash: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
         Models.leaderboards.findOne({ hash }).then(doc => {
+            if(doc) {
+                let { scores } = doc.toObject();
+
+                if(Array.isArray(scores[char]?.[diff])) {
+                    // todo: figure out how to sort before retrieving data? maybe? hopefully that's a thing?
+
+                    scores = scores[char][diff];
+
+                    scores = scores.sort((a, b) => {
+                        return b.accuracy - a.accuracy;
+                    }).map((a, i) => ({
+                        ...a,
+                        position: i+1,
+                    }));
+
+                    const user_id_position = scores.findIndex(a => a.id == id);
+
+                    if(sort === `around` && typeof user_id_position == `number` && user_id_position != -1) {
+                        page = Math.floor(user_id_position/limit);
+                    }
+
+                    console.log(`user_id_position`, user_id_position, `page`, page, `limit`, limit, `sort`, sort);
+
+                    const slice = [ page*limit, (Number(page)+1)*limit ];
+
+                    console.log(`slice`, slice);
+
+                    const viewScores = scores.slice(...slice);
+                    
+                    Models.users.find({ game_id: { $in: viewScores.map(a => a.id) } }).then(docs => {
+                        viewScores.forEach(a => {
+                            const userEntry = docs.find(b => b.game_id === a.id);
+
+                            if(userEntry) {
+                                const data = strip(userEntry);
+
+                                delete data.game_id;
+                                delete data.discord_id;
+
+                                Object.assign(a, data);
+                            }
+                        });
+
+                        res({
+                            scoreCount: scores.length,
+                            scores: viewScores,
+                        })
+                    });
+                } else {
+                    rej(`No scores found for map characteristic ${char} and/or difficulty ${diff}`);
+                }
+            } else {
+                rej(`Leaderboard not found`);
+            }
+        })
+    }),
+    getDiffName: ({ name, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
+        Models.leaderboards.findOne({ "name": { $regex: name } }).then(doc => {
             if(doc) {
                 let { scores } = doc.toObject();
 
