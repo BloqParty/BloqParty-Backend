@@ -58,13 +58,14 @@ module.exports = (schema, schemaType) => (req, res, next) => {
             };
         } else if(!provided && match.default) {
             original = match.default;
+            req[schemaType][key] = match.default;
         }
 
         if(reasons.length > 0) {
             notMatching[key] = reasons.reduce((a,b) => Object.assign(a, b), {});
         }
 
-        req[schemaType][key] = original;
+        //req[schemaType][key] = original;
     };
 
     console.log(`verifySchema [${schemaType}]`, notMatching);

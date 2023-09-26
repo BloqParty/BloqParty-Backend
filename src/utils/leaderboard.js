@@ -1,5 +1,6 @@
 const { Models } = require(`../service/mongo`);
 const strip = require(`./strip`);
+const arrStrip = require(`./removeArrayDuplicates`);
 
 module.exports = {
     getOverview: (hash) => new Promise(async (res, rej) => {
@@ -35,7 +36,179 @@ module.exports = {
         })
     }),
     getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
-        Models.leaderboards.findOne({ hash }).then(doc => {
+        console.log(`getDiff`, { hash, char, diff, sort, limit, page, id });
+
+        const scoreSort = {
+            $sortArray: {
+                input: `$scores.${char}.${diff}`,
+                sortBy: {
+                    accuracy: -1
+                }
+            }
+        }
+
+        let skip = page*limit;
+
+        if(id && sort === `around`) await new Promise(async res => {
+            Models.leaderboards.aggregate([
+                {
+                    $match: {
+                        hash: hash.toUpperCase()
+                    }
+                },
+                {
+                    $project: {
+                        scores: scoreSort
+                    }
+                },
+                {
+                    $project: {
+                        position: {
+                            $indexOfArray: [ `$scores`, {
+                                $filter: {
+                                    input: `$scores`,
+                                    as: 'score',
+                                    cond: {
+                                        $eq: [ '$$score.id', id ]
+                                    }
+                                }
+                            } ]
+                        }
+                    }
+                }
+            ]).then(doc => {
+                if(doc?.[0]?.position && doc[0].position > 0) {
+                    skip = Math.floor(doc[0].position/limit);
+                }
+
+                console.log(`skip`, skip);
+
+                res();
+            }).catch(e => {
+                console.log(`e in dynamic pos lookup`, e);
+                res();
+            });
+        });
+
+        const aggregate = [
+            {
+                $match: {
+                    hash: hash.toUpperCase()
+                }
+            },
+            {
+                $project: {
+                    name: '$name',
+                    hash: '$hash',
+                    scores: scoreSort,
+                    scoreCount: {
+                        $size: `$scores.${char}.${diff}`
+                    }
+                }
+            },
+            {
+                $project: {
+                    name: '$name',
+                    hash: '$hash',
+                    scores: {
+                        $map: {
+                            input: '$scores',
+                            as: 'score',
+                            in: {
+                                $mergeObjects: [
+                                    '$$score',
+                                    {
+                                        position: {
+                                            $add: [{ $indexOfArray: [ '$scores', '$$score' ] }, 1]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    scoreCount: '$scoreCount'
+                }
+            },
+            {
+                $project: {
+                    name: '$name',
+                    hash: '$hash',
+                    scores: {
+                        $slice: [
+                            '$scores',
+                            skip,
+                            limit
+                        ]   
+                    },
+                    scoreCount: '$scoreCount',
+                    playerScore: {
+                        $arrayElemAt: [
+                            {
+                                $filter: {
+                                    input: '$scores',
+                                    as: 'score',
+                                    cond: {
+                                        $eq: [ '$$score.id', id ]
+                                    }
+                                }
+                            },
+                            0
+                        ]
+                    },
+                }
+            }
+        ];
+
+        console.log(`aggregate`, aggregate);
+
+        Models.leaderboards.aggregate(aggregate).then(doc => {
+            if(doc) {
+                const useDoc = doc?.[0];
+                const viewScores = useDoc?.scores;
+
+                if(viewScores?.length) {
+                    Models.users.find({ game_id: { $in: arrStrip([ ...viewScores.map(a => a.id), useDoc.playerScore?.id ]) } }).then(docs => {
+                        viewScores.forEach(a => {
+                            const userEntry = docs.find(b => b.game_id === a.id);
+
+                            if(userEntry) {
+                                const data = strip(userEntry);
+
+                                delete data.game_id;
+                                delete data.discord_id;
+
+                                Object.assign(a, data);
+                            }
+                        });
+
+                        if(docs.find(b => b.game_id == useDoc.playerScore?.id)) {
+                            const data = strip(docs.find(b => b.game_id == useDoc.playerScore?.id));
+
+                            delete data.game_id;
+                            delete data.discord_id;
+
+                            Object.assign(useDoc.playerScore, data);
+                        }
+
+                        res({
+                            scores: viewScores,
+                            scoreCount: useDoc.scoreCount,
+                            playerScore: useDoc.playerScore,
+                        })
+                    });
+                } else {
+                    console.log(`no scores found for map characteristic ${char} and/or difficulty ${diff}`, useDoc);
+                    rej(`No scores found for map characteristic ${char} and/or difficulty ${diff}`);
+                }
+            } else {
+                rej(`Leaderboard not found`);
+            }
+        }).catch(e => {
+            console.log(`e`, e);
+            rej(`Leaderboard not found`);
+        })
+
+        /*Models.leaderboards.findOne({ hash }).then(doc => {
             if(doc) {
                 let { scores } = doc.toObject();
 
@@ -90,6 +263,110 @@ module.exports = {
             } else {
                 rej(`Leaderboard not found`);
             }
+        })*/
+    }),
+    getRecent: ({ page, limit, id }) => new Promise(async (res, rej) => {
+        const unwrap = [
+            {
+                $project: {
+                    name: '$name',
+                    hash: '$hash',
+                    scores: {
+                        $reduce: {
+                            input: {
+                                $reduce: {
+                                    input: {
+                                        $map: {
+                                            input: {
+                                                $objectToArray: '$scores'
+                                            },
+                                            as: 'char',
+                                            in: {
+                                                $map: {
+                                                    input: {
+                                                        $objectToArray: '$$char.v'
+                                                    },
+                                                    as: 'diff',
+                                                    in: {
+                                                        $map: {
+                                                            input: '$$diff.v',
+                                                            as: 'score',
+                                                            in: {
+                                                                $mergeObjects: [
+                                                                    {
+                                                                        char: '$$char.k',
+                                                                        diff: '$$diff.k',
+                                                                    },
+                                                                    '$$score'
+                                                                ]
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    initialValue: [],
+                                    in: {
+                                        $concatArrays: [ '$$value', '$$this' ]
+                                    }
+                                }
+                            },
+                            initialValue: [],
+                            in: {
+                                $concatArrays: [ '$$value', '$$this' ]
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $unwind: '$scores'
+            },
+        ];
+
+        if(id) unwrap.push({
+            $match: {
+                'scores.id': id
+            }
+        })
+
+        Models.leaderboards.aggregate([ // please forgive me for this shit oh my god
+            ...unwrap,
+            {
+                $sort: {
+                    'scores.timeSet': -1
+                }
+            },
+            {
+                $skip: (page-1)*limit
+            },
+            {
+                $limit: limit
+            }
+        ]).then(docs => {
+            //console.log(`docs`, docs);
+            if(docs.length) {
+                Models.users.find({ game_id: { $in: arrStrip(docs.map(a => a.scores.id)) } }).then(userDocs => {
+                    docs.forEach(a => {
+                        const userEntry = userDocs.find(b => b.game_id === a.scores.id);
+
+                        if(userEntry) {
+                            const data = strip(userEntry);
+
+                            delete data.game_id;
+                            delete data.discord_id;
+
+                            Object.assign(a.scores, data);
+                        }
+                    });
+
+                    res(docs)
+                });
+            } else res([])
+        }).catch(e => {
+            console.log(`e`, e);
+            rej(e);
         })
     }),
     scoreUpload: (hash, body) => {
