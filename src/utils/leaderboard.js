@@ -1,6 +1,24 @@
 const { Models } = require(`../service/mongo`);
 const strip = require(`./strip`);
 
+const chars = [
+    `Standard`,
+    `OneSaber`,
+    `NoArrows`,
+    `90Degree`,
+    `360Degree`,
+];
+
+const diffs = [
+    1,
+    3,
+    5,
+    7,
+    9,
+];
+
+const sortFields = chars.map(char => (diffs.map(diff => `${char}.${diff}`))).reduce((a,b) => ([ ...a, ...b ]), []);
+
 module.exports = {
     getOverview: (hash) => new Promise(async (res, rej) => {
         Models.leaderboards.findOne({ hash }).then(doc => {
@@ -91,6 +109,109 @@ module.exports = {
                 rej(`Leaderboard not found`);
             }
         })
+    }),
+    getRecent: (opts) => new Promise(async (res, rej) => {
+        try {
+            console.log(`opts`, opts);
+
+            const { page, limit } = opts;
+
+            const aggregate = [ // please forgive me for this shit oh my god
+                {
+                    $project: {
+                        name: '$name',
+                        hash: '$hash',
+                        scores: {
+                            $reduce: {
+                                input: {
+                                    $reduce: {
+                                        input: {
+                                            $map: {
+                                                input: {
+                                                    $objectToArray: '$scores'
+                                                },
+                                                as: 'char',
+                                                in: {
+                                                    $map: {
+                                                        input: {
+                                                            $objectToArray: '$$char.v'
+                                                        },
+                                                        as: 'diff',
+                                                        in: {
+                                                            $map: {
+                                                                input: '$$diff.v',
+                                                                as: 'score',
+                                                                in: {
+                                                                    $mergeObjects: [
+                                                                        {
+                                                                            char: '$$char.k',
+                                                                            diff: '$$diff.k',
+                                                                        },
+                                                                        '$$score'
+                                                                    ]
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        initialValue: [],
+                                        in: {
+                                            $concatArrays: [ '$$value', '$$this' ]
+                                        }
+                                    }
+                                },
+                                initialValue: [],
+                                in: {
+                                    $concatArrays: [ '$$value', '$$this' ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    $unwind: '$scores'
+                },
+                {
+                    $sort: {
+                        'scores.timeSet': -1
+                    }
+                },
+                {
+                    $skip: (page-1)*limit
+                },
+                {
+                    $limit: limit
+                }
+            ];
+
+            console.log(`aggregate`, aggregate);
+
+            Models.leaderboards.aggregate(aggregate).then(docs => {
+                //console.log(`docs`, docs);
+                if(docs.length) {
+                    Models.users.find({ game_id: { $in: docs.map(a => a.scores.id) } }).then(userDocs => {
+                        docs.forEach(a => {
+                            const userEntry = userDocs.find(b => b.game_id === a.scores.id);
+
+                            if(userEntry) {
+                                const data = strip(userEntry);
+
+                                delete data.game_id;
+                                delete data.discord_id;
+
+                                Object.assign(a.scores, data);
+                            }
+                        });
+
+                        res(docs)
+                    });
+                } else res([])
+            });
+        } catch(e) {
+            console.log(`e`, e);
+        }
     }),
     scoreUpload: (hash, body) => {
         const scoreObject = {
