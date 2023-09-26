@@ -1,5 +1,6 @@
 const { Models } = require(`../service/mongo`);
 const strip = require(`./strip`);
+const arrStrip = require(`./removeArrayDuplicates`);
 
 module.exports = {
     getOverview: (hash) => new Promise(async (res, rej) => {
@@ -166,7 +167,7 @@ module.exports = {
                 const viewScores = useDoc?.scores;
 
                 if(viewScores?.length) {
-                    Models.users.find({ game_id: { $in: [ ...viewScores.map(a => a.id), useDoc.playerScore?.id ] } }).then(docs => {
+                    Models.users.find({ game_id: { $in: arrStrip([ ...viewScores.map(a => a.id), useDoc.playerScore?.id ]) } }).then(docs => {
                         viewScores.forEach(a => {
                             const userEntry = docs.find(b => b.game_id === a.id);
 
@@ -265,7 +266,7 @@ module.exports = {
         })*/
     }),
     getRecent: ({ page, limit, id }) => new Promise(async (res, rej) => {
-        Models.leaderboards.aggregate([ // please forgive me for this shit oh my god
+        const unwrap = [
             {
                 $project: {
                     name: '$name',
@@ -322,11 +323,16 @@ module.exports = {
             {
                 $unwind: '$scores'
             },
-            (id && {
-                $match: {
-                    'scores.id': id
-                }
-            } || {}),
+        ];
+
+        if(id) unwrap.push({
+            $match: {
+                'scores.id': id
+            }
+        })
+
+        Models.leaderboards.aggregate([ // please forgive me for this shit oh my god
+            ...unwrap,
             {
                 $sort: {
                     'scores.timeSet': -1
@@ -341,7 +347,7 @@ module.exports = {
         ]).then(docs => {
             //console.log(`docs`, docs);
             if(docs.length) {
-                Models.users.find({ game_id: { $in: docs.map(a => a.scores.id) } }).then(userDocs => {
+                Models.users.find({ game_id: { $in: arrStrip(docs.map(a => a.scores.id)) } }).then(userDocs => {
                     docs.forEach(a => {
                         const userEntry = userDocs.find(b => b.game_id === a.scores.id);
 
