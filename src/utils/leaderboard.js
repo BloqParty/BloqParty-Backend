@@ -1,24 +1,6 @@
 const { Models } = require(`../service/mongo`);
 const strip = require(`./strip`);
 
-const chars = [
-    `Standard`,
-    `OneSaber`,
-    `NoArrows`,
-    `90Degree`,
-    `360Degree`,
-];
-
-const diffs = [
-    1,
-    3,
-    5,
-    7,
-    9,
-];
-
-const sortFields = chars.map(char => (diffs.map(diff => `${char}.${diff}`))).reduce((a,b) => ([ ...a, ...b ]), []);
-
 module.exports = {
     getOverview: (hash) => new Promise(async (res, rej) => {
         Models.leaderboards.findOne({ hash }).then(doc => {
@@ -53,36 +35,41 @@ module.exports = {
         })
     }),
     getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
-        Models.leaderboards.findOne({ hash }).then(doc => {
-            if(doc) {
-                let { scores } = doc.toObject();
-
-                if(Array.isArray(scores[char]?.[diff])) {
-                    // todo: figure out how to sort before retrieving data? maybe? hopefully that's a thing?
-
-                    scores = scores[char][diff];
-
-                    scores = scores.sort((a, b) => {
-                        return b.accuracy - a.accuracy;
-                    }).map((a, i) => ({
-                        ...a,
-                        position: i+1,
-                    }));
-
-                    const user_id_position = scores.findIndex(a => a.id == id);
-
-                    if(sort === `around` && typeof user_id_position == `number` && user_id_position != -1) {
-                        page = Math.floor(user_id_position/limit);
+        Models.leaderboards.aggregate([
+            {
+                $match: {
+                    hash: hash.toUpperCase()
+                }
+            },
+            {
+                $project: {
+                    name: '$name',
+                    hash: '$hash',
+                    scores: {
+                        $sortArray: {
+                            input: `$scores.${char}.${diff}`,
+                            sortBy: {
+                                accuracy: -1
+                            }
+                        }
+                    },
+                    scoreCount: {
+                        $size: `$scores.${char}.${diff}`
                     }
+                }
+            },
+            {
+                $skip: Number(page)*limit
+            },
+            {
+                $limit: limit
+            }
+        ]).then(doc => {
+            if(doc) {
+                const useDoc = doc?.[0];
+                const viewScores = useDoc?.scores;
 
-                    console.log(`user_id_position`, user_id_position, `page`, page, `limit`, limit, `sort`, sort);
-
-                    const slice = [ page*limit, (Number(page)+1)*limit ];
-
-                    console.log(`slice`, slice);
-
-                    const viewScores = scores.slice(...slice);
-                    
+                if(viewScores?.length) {
                     Models.users.find({ game_id: { $in: viewScores.map(a => a.id) } }).then(docs => {
                         viewScores.forEach(a => {
                             const userEntry = docs.find(b => b.game_id === a.id);
@@ -98,7 +85,7 @@ module.exports = {
                         });
 
                         res({
-                            scoreCount: scores.length,
+                            scoreCount: useDoc.scoreCount,
                             scores: viewScores,
                         })
                     });
@@ -108,7 +95,10 @@ module.exports = {
             } else {
                 rej(`Leaderboard not found`);
             }
-        })
+        }).catch(e => {
+            console.log(`e`, e);
+            rej(`Leaderboard not found`);
+        });
     }),
     getRecent: (opts) => new Promise(async (res, rej) => {
         try {
@@ -186,10 +176,7 @@ module.exports = {
                 }
             ];
 
-            console.log(`aggregate`, aggregate);
-
             Models.leaderboards.aggregate(aggregate).then(docs => {
-                //console.log(`docs`, docs);
                 if(docs.length) {
                     Models.users.find({ game_id: { $in: docs.map(a => a.scores.id) } }).then(userDocs => {
                         docs.forEach(a => {
