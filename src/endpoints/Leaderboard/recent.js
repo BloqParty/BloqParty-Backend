@@ -17,6 +17,11 @@ module.exports = {
             required: false,
             default: 10
         },
+        id: {
+            type: `string`,
+            description: `User ID; used to get recent scores of a specific player`,
+            required: false,
+        },
     },
     get: async (req, res) => {
         leaderboard.getRecent({ ...req.query }).then(data => {
@@ -24,9 +29,7 @@ module.exports = {
         }).catch(e => {
             const s = e.toString().toLowerCase().split(` `)
 
-            res.send(`yeah, no`)
-
-            //res.status(s.includes(`found`) ? 404 : 500).send({ error: e });
+            res.status(s.includes(`found`) ? 404 : 500).send({ error: e });
         })
     }
 }

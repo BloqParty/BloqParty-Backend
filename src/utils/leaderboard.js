@@ -264,7 +264,7 @@ module.exports = {
             }
         })*/
     }),
-    getRecent: ({ page, limit }) => new Promise(async (res, rej) => {
+    getRecent: ({ page, limit, id }) => new Promise(async (res, rej) => {
         Models.leaderboards.aggregate([ // please forgive me for this shit oh my god
             {
                 $project: {
@@ -322,6 +322,11 @@ module.exports = {
             {
                 $unwind: '$scores'
             },
+            (id && {
+                $match: {
+                    'scores.id': id
+                }
+            } || {}),
             {
                 $sort: {
                     'scores.timeSet': -1
