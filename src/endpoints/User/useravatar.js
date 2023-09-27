@@ -6,7 +6,7 @@ module.exports = {
     description: `Displays a user's avatar`,
     params: {
         id: {
-            type: `integer`,
+            type: `string`,
             description: `The user's game ID`,
             required: true,
         }
