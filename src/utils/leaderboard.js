@@ -36,8 +36,6 @@ module.exports = {
         })
     }),
     getDiff: ({ hash, char, diff, sort, limit, page, id }) => new Promise(async (res, rej) => {
-        console.log(`getDiff`, { hash, char, diff, sort, limit, page, id });
-
         const scoreSort = {
             $sortArray: {
                 input: `$scores.${char}.${diff}`,
@@ -45,6 +43,38 @@ module.exports = {
                     accuracy: -1
                 }
             }
+        };
+
+        const scorePositionProj = {
+            $map: {
+                input: '$scores',
+                as: 'score',
+                in: {
+                    $mergeObjects: [
+                        '$$score',
+                        {
+                            position: {
+                                $add: [{ $indexOfArray: [ '$scores', '$$score' ] }, 1]
+                            }
+                        }
+                    ]
+                }
+            }
+        };
+
+        const playerScore = {
+            $arrayElemAt: [
+                {
+                    $filter: {
+                        input: '$scores',
+                        as: 'score',
+                        cond: {
+                            $eq: [ '$$score.id', id ]
+                        }
+                    }
+                },
+                0
+            ]
         }
 
         let skip = page*limit;
@@ -63,32 +93,29 @@ module.exports = {
                 },
                 {
                     $project: {
-                        position: {
-                            $indexOfArray: [ `$scores`, {
-                                $filter: {
-                                    input: `$scores`,
-                                    as: 'score',
-                                    cond: {
-                                        $eq: [ '$$score.id', id ]
-                                    }
-                                }
-                            } ]
-                        }
+                        scores: scorePositionProj
+                    }
+                },
+                {
+                    $project: {
+                        playerScore,
                     }
                 }
             ]).then(doc => {
-                if(doc?.[0]?.position && doc[0].position > 0) {
-                    skip = Math.floor(doc[0].position/limit);
-                }
+                const pos = doc?.[0]?.playerScore?.position
 
-                console.log(`skip`, skip);
+                if(pos && Number(pos) > 0) {
+                    skip = Math.floor((Number(pos)-1)/limit)*limit;
+                } else rej(`Player score not found`);
 
                 res();
             }).catch(e => {
                 console.log(`e in dynamic pos lookup`, e);
-                res();
+                rej(`Player score not found`);
             });
         });
+
+        console.log(`skip`, skip);
 
         const aggregate = [
             {
@@ -110,22 +137,7 @@ module.exports = {
                 $project: {
                     name: '$name',
                     hash: '$hash',
-                    scores: {
-                        $map: {
-                            input: '$scores',
-                            as: 'score',
-                            in: {
-                                $mergeObjects: [
-                                    '$$score',
-                                    {
-                                        position: {
-                                            $add: [{ $indexOfArray: [ '$scores', '$$score' ] }, 1]
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    },
+                    scores: scorePositionProj,
                     scoreCount: '$scoreCount'
                 }
             },
@@ -136,30 +148,15 @@ module.exports = {
                     scores: {
                         $slice: [
                             '$scores',
-                            skip,
-                            limit
+                            Number(skip),
+                            Number(limit)
                         ]   
                     },
                     scoreCount: '$scoreCount',
-                    playerScore: {
-                        $arrayElemAt: [
-                            {
-                                $filter: {
-                                    input: '$scores',
-                                    as: 'score',
-                                    cond: {
-                                        $eq: [ '$$score.id', id ]
-                                    }
-                                }
-                            },
-                            0
-                        ]
-                    },
+                    playerScore,
                 }
             }
         ];
-
-        console.log(`aggregate`, aggregate);
 
         Models.leaderboards.aggregate(aggregate).then(doc => {
             if(doc) {
