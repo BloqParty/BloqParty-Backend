@@ -339,7 +339,7 @@ module.exports = {
                 }
             },
             {
-                $skip: (Number(page)-1)*Number(limit)
+                $skip: Number(page)*Number(limit)
             },
             {
                 $limit: Number(limit)

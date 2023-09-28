@@ -8,7 +8,7 @@ module.exports = {
             type: `integer`,
             description: `Page of scores to get`,
             required: false,
-            default: 1
+            default: 0
         },
         limit: {
             type: `integer`,
