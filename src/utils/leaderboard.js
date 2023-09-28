@@ -339,10 +339,10 @@ module.exports = {
                 }
             },
             {
-                $skip: (page-1)*limit
+                $skip: (Number(page)-1)*Number(limit)
             },
             {
-                $limit: limit
+                $limit: Number(limit)
             }
         ]).then(docs => {
             //console.log(`docs`, docs);
