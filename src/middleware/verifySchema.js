@@ -56,7 +56,7 @@ module.exports = (schema, schemaType) => (req, res, next) => {
                     gotValue: typeof req[schemaType][key] == `undefined` ? `undefined` : req[schemaType][key],
                 })
             };
-        } else if(!provided && match.default) {
+        } else if(!provided && typeof match.default != `undefined`) {
             original = `${match.default}`;
             req[schemaType][key] = `${match.default}`;
         }
