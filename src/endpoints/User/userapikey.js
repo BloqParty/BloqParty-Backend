@@ -8,7 +8,7 @@ module.exports = {
     },
     params: {
         id: {
-            type: `integer`,
+            type: `string`,
             description: `The user's game ID`,
             required: true,
         }
