@@ -366,7 +366,7 @@ module.exports = {
             rej(e);
         })
     }),
-    scoreUpload: (hash, body) => {
+    scoreUpload: async (hash, body) => {
         const scoreObject = {
             id: body.id,
             multipliedScore: body.multipliedScore,
@@ -386,6 +386,31 @@ module.exports = {
             timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
         }
 
+        const user = await Models.users.findOne({ game_id: body.id });
+
+        let embedContent = {
+            title: `null`,
+            fields: [
+                {
+                    name: "Score",
+                    value: `**Multiplied Score:** ${body.multipliedScore} \n**Modified Score:** ${body.modifiedScore} \n**Misses:** ${body.misses} \n`
+                    + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
+                    inline: true
+                },
+                {
+                    name: "Accuracy",
+                    value: `**Accuracy:** ${body.accuracy} \n**FC Accuracy:** ${body.fcAccuracy} \n**Left Hand Accuracy:** ${body.avgHandAccLeft} \n`
+                    + `**Right Hand Accuracy:** ${body.avgHandAccRight} \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
+                    inline: true
+                }
+            ],
+            thumbnail: {
+                url: "null"
+            },
+            color: 0x00ff00,
+            url: "https://thebedroom.party/leaderboard/45E261FE93ABFDC263B3670E84AC39451725881F/"
+        }
+
         return new Promise(async (res, rej) => {
             try {
                 const leaderboard = await Models.leaderboards.findOne({ hash });
@@ -399,6 +424,7 @@ module.exports = {
 
                     const newLeaderboard = new Models.leaderboards({
                         name: request.name,
+                        cover: request.versions[0].coverURL,
                         hash,
                         scores: {
                             [body.characteristic]: {
@@ -411,11 +437,25 @@ module.exports = {
 
                     await newLeaderboard.save();
 
+                    embedContent.title = `${user.username} has uploaded a score to ${request.name}`;
+                    embedContent.thumbnail.url = request.versions[0].coverURL;
+
+                    fetch(process.env.WEBHOOK_URL, {
+                        method: "POST",
+                        headers: {
+                            "content-type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            username: "Score Upload Bot",
+                            embeds: [ embedContent ]
+                        })
+                    });
+
                     res(`Created new leaderboard and uploaded score.`);
                 } else {
                     console.log(`leaderboard found @ ${hash}, attempting upload`);
 
-                    const { scores } = leaderboard.toObject();
+                    const { scores, name, cover } = leaderboard.toObject();
 
                     // create difficulty if it doesn't exist
                     if(!scores[body.characteristic]) scores[body.characteristic] = {};
@@ -437,6 +477,19 @@ module.exports = {
                         $push: {
                             [`scores.${body.characteristic}.${body.difficulty.toString()}`]: scoreObject
                         }
+                    });
+
+                    embedContent.title = `${user.username} has uploaded a score to ${name}`;
+                    embedContent.thumbnail.url = cover;
+                    fetch(process.env.WEBHOOK_URL, {
+                        method: "POST",
+                        headers: {
+                            "content-type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            username: "Score Upload Bot",
+                            embeds: [ embedContent ]
+                        })
                     });
 
                     res(`Uploaded score.`);
