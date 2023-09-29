@@ -16,4 +16,5 @@ module.exports = new Schema({
     avgHandTDRight: Number,
     avgHandTDLeft: Number,
     perfectStreak: Number,
+    fcAccuracy: Number
 })

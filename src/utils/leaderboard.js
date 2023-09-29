@@ -382,6 +382,7 @@ module.exports = {
             avgHandTDRight: body.avgHandTDRight,
             avgHandTDLeft: body.avgHandTDLeft,
             perfectStreak: body.perfectStreak,
+            fcAccuracy: body.fcAccuracy,
             timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
         }
 
