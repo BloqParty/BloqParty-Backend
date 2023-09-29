@@ -2,6 +2,7 @@ const { Schema, model } = require('mongoose');
 
 module.exports = new Schema({
     name: String,
+    cover: String,
     hash: String,
     scores: {
         type: Object,
