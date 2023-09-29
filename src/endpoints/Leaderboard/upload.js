@@ -72,6 +72,10 @@ module.exports = {
             type: `integer`,
             required: true,
         },
+        fcAccuracy: {
+            type: `number`,
+            required: true
+        }
     },
     post: async (req, res) => {
         console.log(`map hash ${req.params.hash}`);
