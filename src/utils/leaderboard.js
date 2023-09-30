@@ -405,10 +405,10 @@ module.exports = {
                 }
             ],
             thumbnail: {
-                url: "null"
+                url: `https://na.cdn.beatsaver.com/${hash}.jpg`
             },
             color: 0x00ff00,
-            url: "https://thebedroom.party/leaderboard/45E261FE93ABFDC263B3670E84AC39451725881F/"
+            url: `https://thebedroom.party/leaderboard/${hash}/`
         }
 
         return new Promise(async (res, rej) => {
@@ -424,7 +424,6 @@ module.exports = {
 
                     const newLeaderboard = new Models.leaderboards({
                         name: request.name,
-                        cover: request.versions[0].coverURL,
                         hash,
                         scores: {
                             [body.characteristic]: {
@@ -438,18 +437,6 @@ module.exports = {
                     await newLeaderboard.save();
 
                     embedContent.title = `${user.username} has uploaded a score to ${request.name}`;
-                    embedContent.thumbnail.url = request.versions[0].coverURL;
-
-                    fetch(process.env.WEBHOOK_URL, {
-                        method: "POST",
-                        headers: {
-                            "content-type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            username: "Score Upload Bot",
-                            embeds: [ embedContent ]
-                        })
-                    });
 
                     res(`Created new leaderboard and uploaded score.`);
                 } else {
@@ -480,20 +467,21 @@ module.exports = {
                     });
 
                     embedContent.title = `${user.username} has uploaded a score to ${name}`;
-                    embedContent.thumbnail.url = cover;
-                    fetch(process.env.WEBHOOK_URL, {
-                        method: "POST",
-                        headers: {
-                            "content-type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            username: "Score Upload Bot",
-                            embeds: [ embedContent ]
-                        })
-                    });
-
                     res(`Uploaded score.`);
                 }
+
+                fetch(process.env.WEBHOOK_URL, {
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: "Score Upload Bot",
+                        embeds: [ embedContent ]
+                    })
+                }).catch(e => {
+                    console.error(e);
+                })
             } catch(e) {
                 rej(e);
             }
