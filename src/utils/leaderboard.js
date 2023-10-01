@@ -410,7 +410,7 @@ module.exports = {
                         }
                     ],
                     thumbnail: {
-                        url: `https://na.cdn.beatsaver.com/${hash}.jpg`
+                        url: `https://cdn.beatsaver.com/${hash.toLowerCase()}.jpg`
                     },
                     color: 0x00ff00,
                     url: `https://thebedroom.party/leaderboard/${hash}/`
