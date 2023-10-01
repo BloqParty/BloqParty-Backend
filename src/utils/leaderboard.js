@@ -366,7 +366,7 @@ module.exports = {
             rej(e);
         })
     }),
-    scoreUpload: async (hash, body) => {
+    scoreUpload: (hash, body) => {
         const scoreObject = {
             id: body.id,
             multipliedScore: body.multipliedScore,
@@ -386,34 +386,35 @@ module.exports = {
             timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
         }
 
-        const user = await Models.users.findOne({ game_id: body.id });
-
-        let embedContent = {
-            title: `null`,
-            fields: [
-                {
-                    name: "Score",
-                    value: `**Multiplied Score:** ${body.multipliedScore} \n**Modified Score:** ${body.modifiedScore} \n**Misses:** ${body.misses} \n`
-                    + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
-                    inline: true
-                },
-                {
-                    name: "Accuracy",
-                    value: `**Accuracy:** ${body.accuracy}% \n**FC Accuracy:** ${body.fcAccuracy}% \n**Left Hand Accuracy:** ${body.avgHandAccLeft}% \n`
-                    + `**Right Hand Accuracy:** ${body.avgHandAccRight}% \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
-                    inline: true
-                }
-            ],
-            thumbnail: {
-                url: `https://na.cdn.beatsaver.com/${hash}.jpg`
-            },
-            color: 0x00ff00,
-            url: `https://thebedroom.party/leaderboard/${hash}/`
-        }
-
         return new Promise(async (res, rej) => {
             try {
-                const leaderboard = await Models.leaderboards.findOne({ hash });
+                const [ leaderboard, user ] = await Promise.all([
+                    Models.leaderboards.findOne({ hash }),
+                    Models.users.findOne({ game_id: body.id })
+                ]);
+        
+                let embedContent = {
+                    title: `${user.username} has uploaded a score to ${hash}`,
+                    fields: [
+                        {
+                            name: "Score",
+                            value: `**Multiplied Score:** ${body.multipliedScore} \n**Modified Score:** ${body.modifiedScore} \n**Misses:** ${body.misses} \n`
+                            + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
+                            inline: true
+                        },
+                        {
+                            name: "Accuracy",
+                            value: `**Accuracy:** ${body.accuracy}% \n**FC Accuracy:** ${body.fcAccuracy}% \n**Left Hand Accuracy:** ${body.avgHandAccLeft}% \n`
+                            + `**Right Hand Accuracy:** ${body.avgHandAccRight}% \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
+                            inline: true
+                        }
+                    ],
+                    thumbnail: {
+                        url: `https://na.cdn.beatsaver.com/${hash}.jpg`
+                    },
+                    color: 0x00ff00,
+                    url: `https://thebedroom.party/leaderboard/${hash}/`
+                }
 
                 if(!leaderboard) {
                     console.log(`leaderboard not found @ ${hash}, creating new one`);
@@ -467,6 +468,7 @@ module.exports = {
                     });
 
                     embedContent.title = `${user.username} has uploaded a score to ${name}`;
+
                     res(`Uploaded score.`);
                 }
 
