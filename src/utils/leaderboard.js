@@ -2,6 +2,52 @@ const { Models } = require(`../service/mongo`);
 const strip = require(`./strip`);
 const arrStrip = require(`./removeArrayDuplicates`);
 
+const opts = {
+    position: (arrayInput, sortBy) => (sortBy ? {
+        $let: {
+            vars: {
+                sortedArray: {
+                    $sortArray: {
+                        input: arrayInput,
+                        sortBy
+                    }
+                }
+            },
+            in: {
+                $map: {
+                    input: '$$sortedArray',
+                    as: 'score',
+                    in: {
+                        $mergeObjects: [
+                            '$$score',
+                            {
+                                position: {
+                                    $add: [{ $indexOfArray: [ '$$sortedArray', '$$score' ] }, 1]
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+    } : {
+        $map: {
+            input: arrayInput,
+            as: 'score',
+            in: {
+                $mergeObjects: [
+                    '$$score',
+                    {
+                        position: {
+                            $add: [{ $indexOfArray: [ arrayInput, '$$score' ] }, 1]
+                        }
+                    }
+                ]
+            }
+        }
+    })
+}
+
 module.exports = {
     getOverview: (hash) => new Promise(async (res, rej) => {
         Models.leaderboards.findOne({ hash }).then(doc => {
@@ -45,23 +91,6 @@ module.exports = {
             }
         };
 
-        const scorePositionProj = {
-            $map: {
-                input: '$scores',
-                as: 'score',
-                in: {
-                    $mergeObjects: [
-                        '$$score',
-                        {
-                            position: {
-                                $add: [{ $indexOfArray: [ '$scores', '$$score' ] }, 1]
-                            }
-                        }
-                    ]
-                }
-            }
-        };
-
         const playerScore = {
             $arrayElemAt: [
                 {
@@ -88,12 +117,7 @@ module.exports = {
                 },
                 {
                     $project: {
-                        scores: scoreSort
-                    }
-                },
-                {
-                    $project: {
-                        scores: scorePositionProj
+                        scores: opts.position(scoreSort)
                     }
                 },
                 {
@@ -127,18 +151,10 @@ module.exports = {
                 $project: {
                     name: '$name',
                     hash: '$hash',
-                    scores: scoreSort,
+                    scores: opts.position(scoreSort),
                     scoreCount: {
                         $size: `$scores.${char}.${diff}`
                     }
-                }
-            },
-            {
-                $project: {
-                    name: '$name',
-                    hash: '$hash',
-                    scores: scorePositionProj,
-                    scoreCount: '$scoreCount'
                 }
             },
             {
@@ -150,7 +166,7 @@ module.exports = {
                             '$scores',
                             Number(skip),
                             Number(limit)
-                        ]   
+                        ]
                     },
                     scoreCount: '$scoreCount',
                     playerScore,
@@ -204,63 +220,6 @@ module.exports = {
             console.log(`e`, e);
             rej(`Leaderboard not found`);
         })
-
-        /*Models.leaderboards.findOne({ hash }).then(doc => {
-            if(doc) {
-                let { scores } = doc.toObject();
-
-                if(Array.isArray(scores[char]?.[diff])) {
-                    // todo: figure out how to sort before retrieving data? maybe? hopefully that's a thing?
-
-                    scores = scores[char][diff];
-
-                    scores = scores.sort((a, b) => {
-                        return b.accuracy - a.accuracy;
-                    }).map((a, i) => ({
-                        ...a,
-                        position: i+1,
-                    }));
-
-                    const user_id_position = scores.findIndex(a => a.id == id);
-
-                    if(sort === `around` && typeof user_id_position == `number` && user_id_position != -1) {
-                        page = Math.floor(user_id_position/limit);
-                    }
-
-                    console.log(`user_id_position`, user_id_position, `page`, page, `limit`, limit, `sort`, sort);
-
-                    const slice = [ page*limit, (Number(page)+1)*limit ];
-
-                    console.log(`slice`, slice);
-
-                    const viewScores = scores.slice(...slice);
-                    
-                    Models.users.find({ game_id: { $in: viewScores.map(a => a.id) } }).then(docs => {
-                        viewScores.forEach(a => {
-                            const userEntry = docs.find(b => b.game_id === a.id);
-
-                            if(userEntry) {
-                                const data = strip(userEntry);
-
-                                delete data.game_id;
-                                delete data.discord_id;
-
-                                Object.assign(a, data);
-                            }
-                        });
-
-                        res({
-                            scoreCount: scores.length,
-                            scores: viewScores,
-                        })
-                    });
-                } else {
-                    rej(`No scores found for map characteristic ${char} and/or difficulty ${diff}`);
-                }
-            } else {
-                rej(`Leaderboard not found`);
-            }
-        })*/
     }),
     getRecent: ({ page, limit, id }) => new Promise(async (res, rej) => {
         const unwrap = [
@@ -284,7 +243,7 @@ module.exports = {
                                                         $objectToArray: '$$char.v'
                                                     },
                                                     as: 'diff',
-                                                    in: {
+                                                    in: opts.position({
                                                         $map: {
                                                             input: '$$diff.v',
                                                             as: 'score',
@@ -298,7 +257,9 @@ module.exports = {
                                                                 ]
                                                             }
                                                         }
-                                                    }
+                                                    }, {
+                                                        accuracy: -1
+                                                    })
                                                 }
                                             }
                                         }
@@ -326,7 +287,7 @@ module.exports = {
             $match: {
                 'scores.id': id
             }
-        })
+        });
 
         Models.leaderboards.aggregate([ // please forgive me for this shit oh my god
             ...unwrap,
@@ -336,13 +297,36 @@ module.exports = {
                 }
             },
             {
+                $group: {
+                    _id: null,
+                    scores: {
+                        $push: '$$CURRENT'
+                    },
+                    scoreCount: {
+                        $count: {}
+                    },
+                }
+            },
+            {
+                $project: {
+                    scores: {
+                        $slice: [
+                            '$scores',
+                            Number(page) * Number(limit),
+                            Number(limit)
+                        ]
+                    },
+                    scoreCount: '$scoreCount'
+                }
+            }
+            /*{
                 $skip: Number(page)*Number(limit)
             },
             {
                 $limit: Number(limit)
-            }
+            }*/
         ]).then(docs => {
-            //console.log(`docs`, docs);
+            console.log(`docs`, docs);
             if(docs.length) {
                 Models.users.find({ game_id: { $in: arrStrip(docs.map(a => a.scores.id)) } }).then(userDocs => {
                     docs.forEach(a => {
@@ -392,7 +376,7 @@ module.exports = {
                     Models.leaderboards.findOne({ hash }),
                     Models.users.findOne({ game_id: body.id })
                 ]);
-        
+
                 let embedContent = {
                     title: `${user.username} has uploaded a score to ${hash}`,
                     fields: [
