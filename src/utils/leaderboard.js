@@ -399,8 +399,8 @@ module.exports = {
                 },
                 {
                     name: "Accuracy",
-                    value: `**Accuracy:** ${body.accuracy} \n**FC Accuracy:** ${body.fcAccuracy} \n**Left Hand Accuracy:** ${body.avgHandAccLeft} \n`
-                    + `**Right Hand Accuracy:** ${body.avgHandAccRight} \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
+                    value: `**Accuracy:** ${body.accuracy}% \n**FC Accuracy:** ${body.fcAccuracy}% \n**Left Hand Accuracy:** ${body.avgHandAccLeft}% \n`
+                    + `**Right Hand Accuracy:** ${body.avgHandAccRight}% \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
                     inline: true
                 }
             ],
