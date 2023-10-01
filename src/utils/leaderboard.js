@@ -388,7 +388,33 @@ module.exports = {
 
         return new Promise(async (res, rej) => {
             try {
-                const leaderboard = await Models.leaderboards.findOne({ hash });
+                const [ leaderboard, user ] = await Promise.all([
+                    Models.leaderboards.findOne({ hash }),
+                    Models.users.findOne({ game_id: body.id })
+                ]);
+        
+                let embedContent = {
+                    title: `${user.username} has uploaded a score to ${hash}`,
+                    fields: [
+                        {
+                            name: "Score",
+                            value: `**Multiplied Score:** ${body.multipliedScore} \n**Modified Score:** ${body.modifiedScore} \n**Misses:** ${body.misses} \n`
+                            + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
+                            inline: true
+                        },
+                        {
+                            name: "Accuracy",
+                            value: `**Accuracy:** ${body.accuracy}% \n**FC Accuracy:** ${body.fcAccuracy}% \n**Left Hand Accuracy:** ${body.avgHandAccLeft}% \n`
+                            + `**Right Hand Accuracy:** ${body.avgHandAccRight}% \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
+                            inline: true
+                        }
+                    ],
+                    thumbnail: {
+                        url: `https://cdn.beatsaver.com/${hash.toLowerCase()}.jpg`
+                    },
+                    color: 0x00ff00,
+                    url: `https://thebedroom.party/leaderboard/${hash}/`
+                }
 
                 if(!leaderboard) {
                     console.log(`leaderboard not found @ ${hash}, creating new one`);
@@ -411,11 +437,13 @@ module.exports = {
 
                     await newLeaderboard.save();
 
+                    embedContent.title = `${user.username} has uploaded a score to ${request.name}`;
+
                     res(`Created new leaderboard and uploaded score.`);
                 } else {
                     console.log(`leaderboard found @ ${hash}, attempting upload`);
 
-                    const { scores } = leaderboard.toObject();
+                    const { scores, name, cover } = leaderboard.toObject();
 
                     // create difficulty if it doesn't exist
                     if(!scores[body.characteristic]) scores[body.characteristic] = {};
@@ -439,8 +467,23 @@ module.exports = {
                         }
                     });
 
+                    embedContent.title = `${user.username} has uploaded a score to ${name}`;
+
                     res(`Uploaded score.`);
                 }
+
+                fetch(process.env.WEBHOOK_URL, {
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: "Score Upload Bot",
+                        embeds: [ embedContent ]
+                    })
+                }).catch(e => {
+                    console.error(e);
+                })
             } catch(e) {
                 rej(e);
             }
