@@ -319,17 +319,10 @@ module.exports = {
                     scoreCount: '$scoreCount'
                 }
             }
-            /*{
-                $skip: Number(page)*Number(limit)
-            },
-            {
-                $limit: Number(limit)
-            }*/
-        ]).then(docs => {
-            console.log(`docs`, docs);
-            if(docs.length) {
-                Models.users.find({ game_id: { $in: arrStrip(docs.map(a => a.scores.id)) } }).then(userDocs => {
-                    docs.forEach(a => {
+        ]).then(([doc]) => {
+            if(doc.scores.length) {
+                Models.users.find({ game_id: { $in: arrStrip(doc.scores.map(a => a.scores.id)) } }).then(userDocs => {
+                    doc.scores.forEach(a => {
                         const userEntry = userDocs.find(b => b.game_id === a.scores.id);
 
                         if(userEntry) {
@@ -342,9 +335,11 @@ module.exports = {
                         }
                     });
 
-                    res(docs)
+                    res(doc)
                 });
-            } else res([])
+            } else if(doc) {
+                res(doc)
+            } else return rej(`Nothing returned.`);
         }).catch(e => {
             console.log(`e`, e);
             rej(e);
