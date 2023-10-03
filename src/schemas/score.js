@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema } = require('mongoose');
 
 module.exports = new Schema({
     id: String,
@@ -11,10 +11,10 @@ module.exports = new Schema({
     fullCombo: Boolean,
     modifiers: String,
     pauses: Number,
-    avgHandAccRight: Number,
-    avgHandAccLeft: Number,
-    avgHandTDRight: Number,
-    avgHandTDLeft: Number,
+    leftHandAccuracy: Number,
+    rightHandAccuracy: Number,
+    leftHandTimeDependency: Number,
+    rightHandTimeDependency: Number,
     perfectStreak: Number,
     fcAccuracy: Number
 })

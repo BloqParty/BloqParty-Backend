@@ -52,19 +52,19 @@ module.exports = {
             type: `integer`,
             required: true,
         },
-        avgHandAccRight: {
+        leftHandAccuracy: {
             type: `number`,
             required: true,
         },
-        avgHandAccLeft: {
+        rightHandAccuracy: {
             type: `number`,
             required: true,
         },
-        avgHandTDRight: {
+        leftHandTimeDependency: {
             type: `number`,
             required: true,
         },
-        avgHandTDLeft: {
+        rightHandTimeDependency: {
             type: `number`,
             required: true,
         },

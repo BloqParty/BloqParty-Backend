@@ -180,25 +180,25 @@ module.exports = {
                 const viewScores = useDoc?.scores;
 
                 if(viewScores?.length) {
-                    Models.users.find({ game_id: { $in: arrStrip([ ...viewScores.map(a => a.id), useDoc.playerScore?.id ]) } }).then(docs => {
+                    Models.users.find({ gameID: { $in: arrStrip([ ...viewScores.map(a => a.id), useDoc.playerScore?.id ]) } }).then(docs => {
                         viewScores.forEach(a => {
-                            const userEntry = docs.find(b => b.game_id === a.id);
+                            const userEntry = docs.find(b => b.gameID === a.id);
 
                             if(userEntry) {
                                 const data = strip(userEntry);
 
-                                delete data.game_id;
-                                delete data.discord_id;
+                                delete data.gameID;
+                                delete data.discordID;
 
                                 Object.assign(a, data);
                             }
                         });
 
-                        if(docs.find(b => b.game_id == useDoc.playerScore?.id)) {
-                            const data = strip(docs.find(b => b.game_id == useDoc.playerScore?.id));
+                        if(docs.find(b => b.gameID == useDoc.playerScore?.id)) {
+                            const data = strip(docs.find(b => b.gameID == useDoc.playerScore?.id));
 
-                            delete data.game_id;
-                            delete data.discord_id;
+                            delete data.gameID;
+                            delete data.discordID;
 
                             Object.assign(useDoc.playerScore, data);
                         }
@@ -321,15 +321,15 @@ module.exports = {
             }
         ]).then(([doc]) => {
             if(doc.scores.length) {
-                Models.users.find({ game_id: { $in: arrStrip(doc.scores.map(a => a.scores.id)) } }).then(userDocs => {
+                Models.users.find({ gameID: { $in: arrStrip(doc.scores.map(a => a.scores.id)) } }).then(userDocs => {
                     doc.scores.forEach(a => {
-                        const userEntry = userDocs.find(b => b.game_id === a.scores.id);
+                        const userEntry = userDocs.find(b => b.gameID === a.scores.id);
 
                         if(userEntry) {
                             const data = strip(userEntry);
 
-                            delete data.game_id;
-                            delete data.discord_id;
+                            delete data.gameID;
+                            delete data.discordID;
 
                             Object.assign(a.scores, data);
                         }
@@ -356,10 +356,10 @@ module.exports = {
             fullCombo: body.fullCombo,
             modifiers: body.modifiers,
             pauses: body.pauses,
-            avgHandAccRight: body.avgHandAccRight,
-            avgHandAccLeft: body.avgHandAccLeft,
-            avgHandTDRight: body.avgHandTDRight,
-            avgHandTDLeft: body.avgHandTDLeft,
+            leftHandAccuracy: body.leftHandAccuracy,
+            rightHandAccuracy: body.rightHandAccuracy,
+            leftHandTimeDependency: body.leftHandTimeDependency,
+            rightHandTimeDependency: body.rightHandTimeDependency,
             perfectStreak: body.perfectStreak,
             fcAccuracy: body.fcAccuracy,
             timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
@@ -369,7 +369,7 @@ module.exports = {
             try {
                 const [ leaderboard, user ] = await Promise.all([
                     Models.leaderboards.findOne({ hash }),
-                    Models.users.findOne({ game_id: body.id })
+                    Models.users.findOne({ gameID: body.id })
                 ]);
 
                 let embedContent = {

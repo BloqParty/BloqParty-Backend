@@ -5,8 +5,8 @@ const strip = require(`./strip`);
 const path = require('path');
 
 module.exports = {
-    get: (game_id) => new Promise(async res => {
-        Models.users.findOne({ game_id }).then(doc => {
+    get: (gameID) => new Promise(async res => {
+        Models.users.findOne({ gameID }).then(doc => {
             if(!doc) {
                 res(null);
             } else {
@@ -15,7 +15,7 @@ module.exports = {
         });
     }),
     create: ({ gameID, username, discordID }) => new Promise(async (res, rej) => {
-        const user = await Models.users.findOne({ game_id: gameID });
+        const user = await Models.users.findOne({ gameID });
         if(user) {
             res({
                 exists: true,
@@ -51,8 +51,8 @@ module.exports = {
 
             if(avatar) {
                 Models.users.create({
-                    discord_id: discordID,
-                    game_id: gameID,
+                    discordID,
+                    gameID,
                     username,
                     avatar,
                     apiKey: crypto.randomBytes(25).toString(`hex`),
@@ -80,7 +80,7 @@ module.exports = {
             if(!doc) {
                 res(null);
             } else {
-                console.log(`user ${doc.game_id} logged in; new key: ${sessionKey}`);
+                console.log(`user ${doc.gameID} logged in; new key: ${sessionKey}`);
                 res(Object.assign(doc.toObject(), {
                     sessionKey,
                     sessionKeyExpires

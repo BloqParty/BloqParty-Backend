@@ -1,12 +1,12 @@
-const { Schema, model } = require('mongoose');
+const { Schema } = require('mongoose');
 
 module.exports = new Schema({
-    game_id: {
+    gameID: {
         type: String,
         required: true,
         unique: true
     },
-    discord_id: {
+    discordID: {
         type: String,
         required: true,
         unique: true
