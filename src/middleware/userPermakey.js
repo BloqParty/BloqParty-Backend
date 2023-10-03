@@ -11,7 +11,7 @@ module.exports = ({
     if(!req.headers.authorization) return res.status(useCode).send(message);
     if(!req.body?.id) return res.status(useCode).send(message);
 
-    Models.users.findOne({ game_id: req.body.id }).then(doc => {
+    Models.users.findOne({ gameID: req.body.id }).then(doc => {
         req.user = doc?.toObject();
 
         if(!doc) {
@@ -21,7 +21,7 @@ module.exports = ({
             console.log(`[auth by permakey] body key ${req.headers.authorization} doesn't match user's key ${req.user.apiKey}`);
             res.status(useCode).send(message);
         } else {
-            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.game_id}), and apikey matches (${req.user.apiKey.slice(0, 8)}..., ${req.headers.authorization.slice(0, 8)}...)`);
+            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.gameID}), and apikey matches (${req.user.apiKey.slice(0, 8)}..., ${req.headers.authorization.slice(0, 8)}...)`);
             next();
         }
     });
