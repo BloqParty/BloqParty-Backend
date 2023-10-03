@@ -377,14 +377,14 @@ module.exports = {
                     fields: [
                         {
                             name: "Score",
-                            value: `**Multiplied Score:** ${body.multipliedScore} \n**Modified Score:** ${body.modifiedScore} \n**Misses:** ${body.misses} \n`
+                            value: `**Multiplied Score:** ${body.multipliedScore.toLocaleString()} \n**Modified Score:** ${body.modifiedScore.toLocaleString()} \n**Misses:** ${body.misses} \n`
                             + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
                             inline: true
                         },
                         {
                             name: "Accuracy",
-                            value: `**Accuracy:** ${body.accuracy}% \n**FC Accuracy:** ${body.fcAccuracy}% \n**Left Hand Accuracy:** ${body.avgHandAccLeft}% \n`
-                            + `**Right Hand Accuracy:** ${body.avgHandAccRight}% \n**Left Hand Time Dependency:** ${body.avgHandTDLeft} \n**Right Hand Time Dependency:** ${body.avgHandTDRight}`,
+                            value: `**Accuracy:** ${body.accuracy.toFixed(2)}% \n**FC Accuracy:** ${body.fcAccuracy.toFixed(2)}% \n**Left Hand Accuracy:** ${body.leftHandAccuracy.toFixed(2)}% \n`
+                            + `**Right Hand Accuracy:** ${body.rightHandAccuracy.toFixed(2)}% \n**Left Time Dependency:** ${body.leftHandTimeDependency.toFixed(2)} \n**Right Time Dependency:** ${body.rightHandTimeDependency.toFixed(2)}`,
                             inline: true
                         }
                     ],
