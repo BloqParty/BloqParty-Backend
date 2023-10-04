@@ -8,6 +8,10 @@ module.exports = {
             type: `string`,
             required: true,
         },
+        description: {
+            type: `string`,
+            required: false
+        },
         discordID: {
             type: `string`,
             required: true,
