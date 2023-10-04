@@ -100,7 +100,7 @@ module.exports = {
         if (body.avatar !== undefined)
         {
             const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${gameID}.png`);
-            Bun.write(imgPath, Buffer.from(body.avatar, `base64`)).catch(e => res.status(500).send({ error: e }));
+            Bun.write(imgPath, Buffer.from(body.avatar, `base64`)).catch(e => console.log(e));
         }
 
         Models.users.findOneAndUpdate({ gameID }, data).then(doc => {
