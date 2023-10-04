@@ -14,8 +14,8 @@ module.exports = {
             }
         });
     }),
-    create: ({ gameID, username, discordID }) => new Promise(async (res, rej) => {
-        const user = await Models.users.findOne({ gameID });
+    create: (body) => new Promise(async (res, rej) => {
+        const user = await Models.users.findOne({ "gameID": body.gameID });
         if(user) {
             res({
                 exists: true,
@@ -23,17 +23,17 @@ module.exports = {
             });
         } else {
             const avatar = await new Promise(async res => {
-                fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${process.env.STEAM_API_KEY}&steamids=${gameID}`)
+                fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${process.env.STEAM_API_KEY}&steamids=${body.gameID}`)
                     .then(res => res.json())
                     .then(json => {
                         if(json.response.players[0].avatarfull) {
                             fetch(json.response.players[0].avatarfull)
                                 .then(res => res.arrayBuffer())
                                 .then(buffer => {
-                                    fs.promises.mkdir(path.dirname(`./src/extras/Users/Avatars/${gameID}.png`), { recursive: true }).catch(() => {}).then(() => {
-                                        fs.writeFile(`./src/extras/Users/Avatars/${gameID}.png`, Buffer.from(buffer), () => {
-                                            console.log(`wrote avatar for ${gameID}`);
-                                            res(`https://api.thebedroom.party/user/${gameID}/avatar`);
+                                    fs.promises.mkdir(path.dirname(`./src/extras/Users/Avatars/${body.gameID}.png`), { recursive: true }).catch(() => {}).then(() => {
+                                        fs.writeFile(`./src/extras/Users/Avatars/${body.gameID}.png`, Buffer.from(buffer), () => {
+                                            console.log(`wrote avatar for ${body.gameID}`);
+                                            res(`https://api.thebedroom.party/user/${body.gameID}/avatar`);
                                         });
                                     })
                                 })
@@ -50,11 +50,13 @@ module.exports = {
             });
 
             if(avatar) {
+                const { discordID, gameID, username } = body;
                 Models.users.create({
                     discordID,
                     gameID,
                     username,
                     avatar,
+                    description: body.description === undefined ? "null" : body.description,
                     apiKey: crypto.randomBytes(25).toString(`hex`),
                     sessionKey: ``,
                     sessionKeyExpires: 0,
@@ -86,6 +88,26 @@ module.exports = {
                     sessionKeyExpires
                 }));
             }
+        });
+    }),
+    update: (body, gameID) => new Promise(async (res) => {
+        let data = {};
+
+        if (body.username !== undefined)
+            data.username = body.username;
+        if (body.description !== undefined)
+            data.description = body.description;
+        if (body.avatar !== undefined)
+        {
+            const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${gameID}.png`);
+            Bun.write(imgPath, Buffer.from(body.avatar, `base64`)).catch(e => res.status(500).send({ error: e }));
+        }
+
+        Models.users.findOneAndUpdate({ gameID }, data).then(doc => {
+            if (!doc)
+                res(null);
+            else
+                res(Object.assign(doc.toObject(), data));
         });
     })
 }
