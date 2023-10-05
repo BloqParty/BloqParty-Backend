@@ -16,16 +16,16 @@ module.exports = ({
         req.user = doc?.toObject();
 
         if(!doc) {
-            console.log(`[auth by permakey] user not found`);
+            console.log(`[Middleware | userSessionKey] User with id ${req.body.id} not found`);
             res.status(useCode).send(message);
         } else if(req.headers.authorization !== req.user.sessionKey) {
-            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.gameID}), but body key ${req.headers.authorization} doesn't match user's key ${req.user.sessionKey}`);
+            console.log(`[Middleware | userSessionKey] Request authorization ${req.headers.authorization} doesn't match user's API key ${req.user.apiKey}.`);
             res.status(useCode).send(message);
         } else if(Date.now() > req.user.sessionKeyExpires) {
-            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.gameID}), but sessionKey expired ${time(Date.now() - req.user.sessionKeyExpires).string} ago`);
+            console.log(`[Middleware | userSessionKey] Session key for user ${req.body.id} has expired ${time(Date.now() - req.user.sessionKeyExpires)} ago.`)
             res.status(useCode).send(message);
         } else {
-            console.log(`[auth by permakey] user found (${req.body.id}, ${req.user.gameID}), sessionKey matches (${req.user.sessionKey.slice(0, 8)}..., ${req.headers.authorization.slice(0, 8)}...) and expires in ${time(req.user.sessionKeyExpires - Date.now()).string}`);
+            console.log(`[Middleware | userSessionKey] User with id ${req.body.id} has passed checks.`);
             next();
         }
     });

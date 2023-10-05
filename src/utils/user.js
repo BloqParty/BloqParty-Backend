@@ -32,19 +32,18 @@ module.exports = {
                                 .then(buffer => {
                                     fs.promises.mkdir(path.dirname(`./src/extras/Users/Avatars/${body.gameID}.png`), { recursive: true }).catch(() => {}).then(() => {
                                         fs.writeFile(`./src/extras/Users/Avatars/${body.gameID}.png`, Buffer.from(buffer), () => {
-                                            console.log(`wrote avatar for ${body.gameID}`);
                                             res(`https://api.thebedroom.party/user/${body.gameID}/avatar`);
                                         });
                                     })
                                 })
                                 .catch(e => {
-                                    console.error(`failed getting steam avi [2]`, e);
+                                    console.log(`[API | /user/create/] Error occured: ${e}.`);
                                     res(null);
                                 })
                         } else res(null);
                     })
                     .catch(e => {
-                        console.error(`failed getting steam avi [1]`, e);
+                        console.log(`[API | /user/create/] Error occured: ${e}.`);
                         res(null);
                     })
             });
@@ -82,7 +81,7 @@ module.exports = {
             if(!doc) {
                 res(null);
             } else {
-                console.log(`user ${doc.gameID} logged in; new key: ${sessionKey}`);
+                console.log(`[API | /user/login/] User ${doc.gameID} has logged in. Session key: ${sessionKey}`);
                 res(Object.assign(doc.toObject(), {
                     sessionKey,
                     sessionKeyExpires

@@ -14,7 +14,7 @@ module.exports = {
         }
     },
     post: async (req, res) => {
-        console.log(`user path ${req.params.id}`)
+        console.log(`[API | /user/id/apiKey/] Getting API key for user with ID: ${req.params.id}.`);
         Models.users.findOne({ gameID: req.params.id }).then(doc => {
             if(!doc) {
                 res.status(404).send({ apiKey: null, error: `User not found` });

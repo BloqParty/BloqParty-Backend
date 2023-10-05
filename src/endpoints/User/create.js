@@ -27,7 +27,7 @@ module.exports = {
         }),
     },
     post: async (req, res) => {
-        console.log(`user creating ${req.body.username}`)
+        console.log(`[API | /user/create/] Creating user with name: ${req.body.username}.`);
 
         user.create(req.body).then(({exists, user}={}) => {
             if(exists) {
@@ -36,7 +36,7 @@ module.exports = {
                 res.send({ apiKey: user.apiKey });
             }
         }).catch(e => {
-            console.log(e);
+            console.log(`[API | /user/create/]`);
             res.status(500).send({ apiKey: null, error: `Internal server error: ${e}` });
         })
     }

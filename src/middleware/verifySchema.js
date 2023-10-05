@@ -68,8 +68,6 @@ module.exports = (schema, schemaType) => (req, res, next) => {
         req[schemaType][key] = original;
     };
 
-    console.log(`verifySchema [${schemaType}]`, notMatching);
-
     if(Object.keys(notMatching).length) {
         res.status(400).send({
             error: `Invalid ${schemaType}`,

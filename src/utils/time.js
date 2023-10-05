@@ -18,7 +18,7 @@ util.timestampStringToNum = function (ts) {
 
 util.convertMS = function (ms) {
     if (typeof ms != `number` && isNaN(ms))
-        return console.l(`ms in convertms is not a number!`);
+        return;
     if (typeof ms == `string`) {
         ms = Number(ms);
     }
@@ -167,7 +167,7 @@ let timestampStringToNum = function (ts) {
 
 let convertMS = function (ms) {
     if (typeof ms != `number` && isNaN(ms))
-        return console.error(`ms in convertms is not a number!`);
+        return;
     if (typeof ms == `string`) {
         ms = Number(ms);
     }

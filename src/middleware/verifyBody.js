@@ -11,8 +11,6 @@ module.exports = (schema) => (req, res, next) => {
             }
         };
 
-        console.log(`verifyBody`, notMatching);
-
         if(Object.keys(notMatching).length) {
             res.status(400).send({
                 error: `Invalid body`,

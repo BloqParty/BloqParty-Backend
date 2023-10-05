@@ -58,8 +58,6 @@ module.exports = {
                     [char]: Object.keys(diff)
                 })).reduce((a,b) => ({ ...a, ...b }), {});
 
-                console.log(`overview of ${hash}`, obj);
-
                 res(obj);
             } else rej(`Leaderboard not found`)
         })
@@ -74,8 +72,6 @@ module.exports = {
                         diff: scores.length
                     })).reduce((a,b) => ({ ...a, ...b }), {})
                 })).reduce((a,b) => ({ ...a, ...b }), {});
-
-                console.log(`overview of ${hash}`, obj);
 
                 res(obj);
             } else rej(`Leaderboard not found`)
@@ -133,13 +129,10 @@ module.exports = {
                 } else rej(`Player score not found`);
 
                 res();
-            }).catch(e => {
-                console.log(`e in dynamic pos lookup`, e);
+            }).catch(_ => {
                 rej(`Player score not found`);
             });
         });
-
-        console.log(`skip`, skip);
 
         const aggregate = [
             {
@@ -210,14 +203,14 @@ module.exports = {
                         })
                     });
                 } else {
-                    console.log(`no scores found for map characteristic ${char} and/or difficulty ${diff}`, useDoc);
+                    console.log(`[API | /leaderboard/hash/] No scores found for characteristic ${char} and/or difficulty ${diff}`);
                     rej(`No scores found for map characteristic ${char} and/or difficulty ${diff}`);
                 }
             } else {
                 rej(`Leaderboard not found`);
             }
         }).catch(e => {
-            console.log(`e`, e);
+            console.log(`[API | /leaderboard/hash/] Error has occured: `, e);
             rej(`Leaderboard not found`);
         })
     }),
@@ -341,7 +334,7 @@ module.exports = {
                 res(doc)
             } else return rej(`Nothing returned.`);
         }).catch(e => {
-            console.log(`e`, e);
+            console.log(`[API | /leaderboard/recent/] Error occured: ${e}`);
             rej(e);
         })
     }),
@@ -396,7 +389,7 @@ module.exports = {
                 }
 
                 if(!leaderboard) {
-                    console.log(`leaderboard not found @ ${hash}, creating new one`);
+                    console.log(`[API | /leaderboard/hash/upload] Leaderboard not found for ${hash}, creating a new leaderboard.`);
 
                     const request = await fetch(`https://api.beatsaver.com/maps/hash/${hash}`).then(a => a.json());
 
@@ -420,9 +413,9 @@ module.exports = {
 
                     res(`Created new leaderboard and uploaded score.`);
                 } else {
-                    console.log(`leaderboard found @ ${hash}, attempting upload`);
+                    console.log(`[API | /leaderboard/hash/upload] Leaderboard found for ${hash}, attempting upload`);
 
-                    const { scores, name, cover } = leaderboard.toObject();
+                    const { scores, name } = leaderboard.toObject();
 
                     // create difficulty if it doesn't exist
                     if(!scores[body.characteristic]) scores[body.characteristic] = {};
@@ -461,7 +454,7 @@ module.exports = {
                         embeds: [ embedContent ]
                     })
                 }).catch(e => {
-                    console.error(e);
+                    console.log(`[API | /leaderboard/hash/upload] Error occured: ${e}`);
                 })
             } catch(e) {
                 rej(e);

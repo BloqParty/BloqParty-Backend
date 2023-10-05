@@ -1,7 +1,7 @@
 const fs = require('fs');
 const pkg = require(`../../package.json`);
 
-const log = (str) => console.log(`[SWAGGER] ${str}`);
+const log = (str) => console.log(`[Server | Swagger] ${str}`);
 
 const mapSchema = (type) => ([name, o]) => ({
     name,
@@ -134,7 +134,7 @@ module.exports = ({ port }) => new Promise(async res => {
     
                         res();
                     } catch(e) {
-                        console.error(`Failed to fetch ${test.path}`, e);
+                        console.error(`[Server | Swagger] Error occured: ${e}`);
                         res();
                     }
                 })

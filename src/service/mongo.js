@@ -8,31 +8,25 @@ const Models = {}
 module.exports = {
     Models,
     SetupMongo: () => new Promise(async (res, rej) => {
-        console.log(`connecting to mongodb (function called)`);
+        console.log(`[Server | MongoDB] Setting up connection to MongoDB.`);
 
         try {
             mongoose.connect(process.env.MONGO_URI, { dbName: process.env.DATABASE });
-
-            console.log(`connected to mongodb; reading schemas ${fs.existsSync(`./src/schemas`)}`);
     
             //const schemas = [ `leaderboards`, `score`, `user` ]
             const schemas = fs.readdirSync(`./src/schemas`).map(file => ({
                 name: file.split('.').slice(0, -1).join(`.`),
                 schema: require(`../schemas/${file}`)
-            }))
-            
-            console.log(`schemas`, schemas.length);
+            }));
     
             for(const { name, schema } of schemas) {
-                console.log(`establishing model ${name}`);
                 Models[name] = mongoose.model(name, schema);
             };
     
-            console.log(`established models i think`);
-    
+            console.log(`[Server | MongoDB] Successfully set up connection to MongoDB.`);
             return res(Models);
         } catch (err) {
-            console.log('MongoDB connection failed');
+            console.log(`[Server | MongoDB] Error occured: ${err}`);
             rej(err);
         }
     }),

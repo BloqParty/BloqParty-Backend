@@ -13,14 +13,10 @@ module.exports = {
     },
     get: async (req, res) => {
         const imgPath = path.join(process.cwd(), `./src/extras/Users/Avatars/${req.params.id}.png`);
-
-        console.log(`imgPath`, imgPath);
-
         const file = Bun.file(imgPath);
 
         if(file.size) {
             res.setHeader(`Content-Type`, file.type);
-
             const stream = await file.arrayBuffer();
 
             res.send(Buffer.from(stream));

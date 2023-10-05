@@ -1,24 +1,25 @@
 const child_process = require(`child_process`);
 
 module.exports = () => new Promise(res => {
-    console.log(`Checking for updates...`)
-    child_process.exec(`git reset --hard`, (err, out, stderr) => {
+    console.log(`[Server | Automatic Update] Checking for updates...`);
+    child_process.exec(`git reset --hard`, (err, _, _) => {
         if(!err) {
-            child_process.exec(`git pull`, (err, out, stderr) => {
+            child_process.exec(`git pull`, (err, out, _) => {
                 if(err) {
-                    console.warn(`Unable to pull files!`, err); res(false)
+                    console.warn(`[Server | Automatic Update] Error occured: ${err}`); 
+                    res(false)
                 } else if(!`${out}`.toLowerCase().includes(`already up to date`)) {
-                    console.log(`Updates were made; successfully pulled files -- running bun install!`);
-                    child_process.exec(`bun i`, (e, out, stderr) => {
+                    console.log(`[Server | Automatic Update] Pulled latest changes, running install.`);
+                    child_process.exec(`bun i`, (e, _, _) => {
                         if(!err) {
-                            console.log(`Successfully ran bun install!`);
+                            console.log(`[Server | Automatic Update] Ran install successfully.`);
                             res(true)
                         } else {
-                            console.error(`Error occurred while rebuilding node_modules: ${e ? e : `-- no output --`}`, e);
+                            console.error(`[Server | Automatic Update] Error occured ${e}`);
                         }
                     })
                 } else {
-                    console.log(`Up to date!`)
+                    console.log(`[Server | Automatic Update] Server is up to date.`);
                     res(false)
                 }
             })

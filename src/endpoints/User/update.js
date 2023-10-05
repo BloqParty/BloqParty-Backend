@@ -31,6 +31,7 @@ module.exports = {
         }
     },
     post: async (req, res) => {
+        console.log(`[API | /user/id/update/] Updating profile of user ${req.params.id}.`);
         user.update(req.body, req.params.id).catch(e => console.log(e)).then(usr => {
             if (usr !== null)
                 res.status(200).send("Updated user");

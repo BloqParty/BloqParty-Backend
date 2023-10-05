@@ -78,7 +78,7 @@ module.exports = {
         }
     },
     post: async (req, res) => {
-        console.log(`map hash ${req.params.hash}`);
+        console.log(`[API | /leaderboard/hash/upload/] Uploading score to: ${req.params.hash}.`);
 
         leaderboard.scoreUpload(req.params.hash, req.body).then(data => {
             res.send(data);

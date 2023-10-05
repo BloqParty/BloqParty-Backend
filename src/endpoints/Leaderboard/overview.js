@@ -11,7 +11,7 @@ module.exports = {
         }
     },
     get: async (req, res) => {
-        console.log(`map hash ${req.params.hash}`);
+        console.log(`[API | /leaderboard/hash/overview/] Getting overview for: ${req.params.hash}.`);
 
         leaderboard.getOverview(req.params.hash).then(data => {
             res.send(data);

@@ -8,7 +8,7 @@ const thread = require(`./balancer/thread`);
 const swagger = require(`./utils/swagger`);
 
 const threadCount = parseInt(process.argv[2]) || os.cpus().length;
-console.log(`Starting ${threadCount} threads (received: ${process.argv[2]})`);
+console.log(`[Server | Startup] Starting server with ${threadCount}.`);
 
 let swaggerResolve = null;
 let swaggerObj = new Promise(res => {
@@ -19,19 +19,19 @@ const threads = {};
 let threadUsed = 0;
 
 for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) => ([a+1+parseInt(process.env.PORT), i]))) await new Promise(async res => {
-    console.log(`Starting thread ${port}`);
+    console.log(`[Server | Startup] Starting thread on port: ${port}`);
 
     const data = await thread(`./thread.js`, { PORT: port });
 
     threads[port] = data;
 
-    console.log(`Started thread ${port}`);
+    console.log(`[Server | Startup] Started thread on port: ${port}`);
 
     if(index == 0) {
-        console.log(`Generating swagger`);
+        console.log(`[Server | Startup] Generating swagger.`);
 
         swagger({ port }).then(json => {
-            console.log(`Generated swagger`);
+            console.log(`[Server | Startup] Generated swagger.`);
             swaggerResolve(json);
         })
     };
@@ -41,17 +41,13 @@ for(const [ port, index ] of Array.from(Array(threadCount).keys()).map((a, i) =>
 
 const threadKeys = Object.keys(threads);
 
-console.log(`Started ${threadKeys.length} threads (ports ${threadKeys.join(`, `)}); creating proxy`);
+console.log(`[Server | Startup] Started ${threadKeys.length} threads.`);
 
 const methodsWithBody = [`POST`, `PUT`, `PATCH`];
 
 const app = express();
 const server = http.createServer(async (req, res) => {
-    const timeStr = `[PROXY] ${req.url}`
-
-    console.time(timeStr);
-
-    res.on(`finish`, () => console.timeEnd(timeStr));
+    const timeStr = `[PROXY] ${req.url}`;
 
     if(req.url.startsWith(`/docs`)) {
         app(req, res);
@@ -72,16 +68,15 @@ const server = http.createServer(async (req, res) => {
     
         const port = threadKeys[thisThread];
 
-        console.log(`Proxying ${req.url.split(`?`)[0]} to port ${port}`);
+        console.log(`[Server | API] Proxying ${req.url.split(`?`)[0]} to port: ${port}`);
 
         if(methodsWithBody.includes(req.method.toUpperCase())) await new Promise(async res => {
             let data = ``;
 
             req.on(`end`, () => {
                 if(typeof data == `string`) {
-                    console.log(`[BODY] req body ended before data was parsed!`);
+                    console.log(`[Server | API] request body ended before data was parsed!`);
                     data = null;
-                    console.timeStamp(timeStr);
                     res();
                 }
             });
@@ -93,11 +88,10 @@ const server = http.createServer(async (req, res) => {
                     try {
                         data = JSON.parse(data);
                         req.body = data;
-                        console.log(`[BODY] parsed`);
-                        console.timeStamp(timeStr);
+                        console.log(`[Server | API] parsed body`);
                         res();
                     } catch(e) {
-                        console.log(`[BODY] ${data.length}...`);
+                        console.log(`[Server | API] Error occured: ${e}`);
                     }
                 }
             });
@@ -118,19 +112,17 @@ const server = http.createServer(async (req, res) => {
             response.on(`end`, () => res.end(data));
         });
 
-        console.timeStamp(timeStr);
-
         newReq.end(JSON.stringify(req.body));
     }
 });
 
 swaggerObj.then(json => {
     app.use(`/docs`, (req, res, next) => {
-        console.log(`[DOCS] ${req.url}`);
+        console.log(`[Server | Docs] ${req.url}`);
         next();
     }, swaggerUi.serve, swaggerUi.setup(json));
 });
 
 server.listen(parseInt(process.env.PORT), () => {
-    console.log(`Started proxy on port ${parseInt(process.env.PORT)}`);
+    console.log(`[Server | Startup] Started proxy on port ${process.env.PORT}`);
 });

@@ -20,7 +20,7 @@ module.exports = {
     },
     post: async (req, res) => {
         if(req.body.session) {
-            console.log(`logging in ${req.user.username} with new session (fetched from permakey middleware)`);
+            console.log(`[API | /user/login/] Logging in ${req.user.username} with new session.`)
             user.login(req.user.apiKey).then(usr => {
                 if(usr.sessionKey) {
                     res.send(Object.assign(strip(usr), {
@@ -28,14 +28,14 @@ module.exports = {
                         sessionKeyExpires: usr.sessionKeyExpires,
                     }));
                 } else {
-                    console.log(`[userlogin] session key wasn't returned?`, usr);
+                    console.log(`[API | /user/login/] Session key wasn't returned.`);
                     res.status(500).send({
                         error: `Internal server error -- session key wasn't returned?`
                     });
                 }
             })
         } else {
-            console.log(`logging in ${req.user.username} WITHOUT new session (fetched from permakey middleware)`);
+            console.log(`[API | /user/login/] Logging in ${req.user.username} without new session.`)
             res.send(strip(req.user));
         }
     }

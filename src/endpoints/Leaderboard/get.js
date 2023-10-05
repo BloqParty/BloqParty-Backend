@@ -45,7 +45,7 @@ module.exports = {
         }
     },
     get: async (req, res) => {
-        console.log(`map hash ${req.params.hash}`);
+        console.log(`[API | /leaderboard/hash/] Getting leaderboard for ${req.params.hash}`)
 
         leaderboard.getDiff({...req.query, hash: req.params.hash}).then(data => {
             res.send(data);

@@ -1,7 +1,7 @@
 const path = require(`path`);
 
 module.exports = (relPath, workerData) => new Promise(async res => {
-    console.log(`Starting worker ${relPath}`, workerData);
+    await console.log(`[Server | Worker] Starting worker.`);
 
     const obj = {
         setDocs: (docs) => {
@@ -22,8 +22,8 @@ module.exports = (relPath, workerData) => new Promise(async res => {
 
         obj.worker.ref();
 
-        obj.worker.addEventListener(`message`, ({ data }={}) => {
-            console.log(`Worker message`, data);
+        obj.worker.addEventListener(`message`, async ({ data }={}) => {
+            await console.log(`[Server | Worker] Worker running.`);
 
             if(data.type == `init`) {
                 obj.worker.postMessage({
@@ -31,7 +31,7 @@ module.exports = (relPath, workerData) => new Promise(async res => {
                     value: workerData
                 });
             } else if(data.type == `ready`) {
-                console.log(`Worker ready`);
+                console.log(`[Server | Worker] Worker ready.`);
 
                 if(!resolved) {
                     resolved = true;
@@ -48,17 +48,17 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         });
 
         obj.worker.addEventListener(`exit`, () => {
-            console.log(`Worker exited`);
+            console.log(`[Server | Worker] Worker exited.`);
             r();
         });
 
         obj.worker.addEventListener(`error`, e => {
-            console.log(`Worker errored\n${e.message}`);
+            console.log(`[Server | Worker] Worker has errored: ${e.message}`);
             r();
         });
 
         obj.worker.addEventListener(`disconnect`, () => {
-            console.log(`Worker disconnected`);
+            console.log(`[Server | Worker] Worker disconnected.`);
             r();
         });
     })

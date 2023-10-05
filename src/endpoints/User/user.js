@@ -11,7 +11,6 @@ module.exports = {
         }
     },
     get: async (req, res) => {
-        console.log(`user path ${req.params.id}`)
         const usr = await user.get(req.params.id);
         if(usr) {
             res.send(usr);
