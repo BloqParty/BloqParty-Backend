@@ -52,11 +52,11 @@ module.exports = {
             type: `integer`,
             required: true,
         },
-        leftHandAccuracy: {
+        leftHandAverageScore: {
             type: `number`,
             required: true,
         },
-        rightHandAccuracy: {
+        rightHandAverageScore: {
             type: `number`,
             required: true,
         },

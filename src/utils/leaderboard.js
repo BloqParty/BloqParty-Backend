@@ -349,8 +349,8 @@ module.exports = {
             fullCombo: body.fullCombo,
             modifiers: body.modifiers,
             pauses: body.pauses,
-            leftHandAccuracy: body.leftHandAccuracy,
-            rightHandAccuracy: body.rightHandAccuracy,
+            leftHandAverageScore: body.leftHandAverageScore,
+            rightHandAverageScore: body.rightHandAverageScore,
             leftHandTimeDependency: body.leftHandTimeDependency,
             rightHandTimeDependency: body.rightHandTimeDependency,
             perfectStreak: body.perfectStreak,
@@ -376,8 +376,8 @@ module.exports = {
                         },
                         {
                             name: "Accuracy",
-                            value: `**Accuracy:** ${body.accuracy.toFixed(2)}% \n**FC Accuracy:** ${body.fcAccuracy.toFixed(2)}% \n**Left Hand Accuracy:** ${body.leftHandAccuracy.toFixed(2)}% \n`
-                            + `**Right Hand Accuracy:** ${body.rightHandAccuracy.toFixed(2)}% \n**Left Time Dependency:** ${body.leftHandTimeDependency.toFixed(2)} \n**Right Time Dependency:** ${body.rightHandTimeDependency.toFixed(2)}`,
+                            value: `**Accuracy:** ${body.accuracy.toFixed(2)}% \n**FC Accuracy:** ${body.fcAccuracy.toFixed(2)}% \n**Left Hand Average Score:** ${body.leftHandAverageScore.toFixed(2)} \n`
+                            + `**Right Hand Average Score:** ${body.rightHandAverageScore.toFixed(2)} \n**Left Time Dependency:** ${body.leftHandTimeDependency.toFixed(2)} \n**Right Time Dependency:** ${body.rightHandTimeDependency.toFixed(2)}`,
                             inline: true
                         }
                     ],
