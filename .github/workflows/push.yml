@@ -20,4 +20,4 @@ jobs:
     steps:
       - name: Send request lol
         run: |
-          curl -X GET -H "Authorization:$PULLANDRESTART" $WEBSITEIP/pullAndRestart
+          curl -X GET -H "Authorization:$PULLANDRESTART" http://api.thebedroom.party/pullAndRestart
