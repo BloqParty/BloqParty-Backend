@@ -396,7 +396,7 @@ module.exports = {
                     if(request.error) return rej(`Leaderboard doesn't exist on BeatSaver, upload is forbidden`);
 
                     const newLeaderboard = new Models.leaderboards({
-                        name: request.name,
+                        name: request.metadata.songName,
                         hash,
                         scores: {
                             [body.characteristic]: {
@@ -409,7 +409,7 @@ module.exports = {
 
                     await newLeaderboard.save();
 
-                    embedContent.title = `${user.username} has uploaded a score to ${request.name}`;
+                    embedContent.title = `${user.username} has uploaded a score to ${request.metadata.songName}`;
 
                     res(`Created new leaderboard and uploaded score.`);
                 } else {
