@@ -339,6 +339,9 @@ module.exports = {
         })
     }),
     scoreUpload: (hash, body) => {
+        if (body.accuracy > 121)
+            rej("Accuracy is above maximum!");
+
         const scoreObject = {
             id: body.id,
             multipliedScore: body.multipliedScore,
