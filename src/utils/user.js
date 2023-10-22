@@ -3,7 +3,6 @@ const crypto = require('crypto');
 const fs = require('fs');
 const strip = require(`./strip`);
 const path = require('path');
-const { builtinModules } = require('module');
 
 module.exports = {
     get: (gameID) => new Promise(async res => {
