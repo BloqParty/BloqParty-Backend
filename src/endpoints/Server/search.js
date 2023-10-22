@@ -45,7 +45,6 @@ module.exports = {
             }
         });
 
-        console.log(`Results: ` + results);
         (results.users.length > 0 || results.leaderboards.length > 0) ? res.send(results) : res.send({error: "No results found"});
     }
 }
