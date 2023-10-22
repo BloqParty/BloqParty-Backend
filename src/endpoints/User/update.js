@@ -32,7 +32,30 @@ module.exports = {
     },
     post: async (req, res) => {
         console.log(`[API | /user/id/update/] Updating profile of user ${req.params.id}.`);
-        user.update(req.body, req.params.id).catch(e => console.log(e)).then(usr => {
+
+        const body = {};
+        
+        if(typeof req.body.username == `string`) {
+            if(req.body.username.length <= 32 && req.body.username.length >= 2) {
+                body.username = req.body.username;
+            } else {
+                res.status(400).send(`Username must be between 2 and 32 characters.`);
+                return;
+            }
+        };
+
+        if(typeof req.body.description == `string`) {
+            if(req.body.description.length <= 256) {
+                body.description = req.body.description;
+            } else {
+                res.status(400).send(`Description must be less than 256 characters.`);
+                return;
+            }
+        };
+
+        if(req.body.avatar) body.avatar = req.body.avatar;
+
+        user.update(body, req.params.id).catch(e => console.log(e)).then(usr => {
             if (usr !== null)
                 res.status(200).send("Updated user");
             else 
