@@ -109,29 +109,5 @@ module.exports = {
             else
                 res(Object.assign(doc.toObject(), data));
         });
-    }),
-    search: (name) => new Promise(async (res) => {
-        let results = [];
-        console.log("a");
-        await Models.users.find({ username: { $regex: name, $options: "i" } }).then(docs => {
-            if (docs)
-            {
-                console.log(name + `\n` + docs)
-                for (doc in docs)
-                    results.push(strip(doc));
-            }
-        });
-        console.log("b");
-        await Models.users.find({ id: { $regex: name, $options: "i" } }).then(docs => {
-            if (docs)
-            {
-                console.log(name + `\n` + docs)
-                for (doc in docs)
-                    results.push(strip(doc));
-            }
-        });
-
-        console.log(results);
-        results.length == 0 ? res(null) : res(results);
     })
 }
