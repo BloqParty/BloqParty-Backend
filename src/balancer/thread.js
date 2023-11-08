@@ -53,7 +53,7 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         });
 
         obj.worker.addEventListener(`error`, e => {
-            console.log(`[Server | Worker] Worker has errored: ${e.message}`);
+            console.log(`[Server | Worker] Worker has errored: ${e.message === undefined ? e : e.message}`);
             r();
         });
 
