@@ -83,7 +83,7 @@ module.exports = {
         leaderboard.scoreUpload(req.params.hash, req.body).then(data => {
             res.send(data);
         }).catch(e => {
-            const s = e.toString().toLowerCase();
+            const s = `${e}`.toLowerCase();
 
             let code = 500;
 

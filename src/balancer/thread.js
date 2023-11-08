@@ -1,5 +1,15 @@
 const path = require(`path`);
 
+const events = require('fs')
+    .readdirSync(path.resolve(__dirname, `events`))
+    .filter(f => f.endsWith(`.js`))
+    .map(f => require(path.resolve(__dirname, `events`, f)))
+    .reduce((a,b) => a.concat(Array.isArray(b) ? b : [b]), [])
+    .reduce((a,b) => Object.assign(a, { [b.on]: b.func }), {});
+//above will basically take all objects from individual events file and put it into one single object
+
+console.log(`[Server | Balancer] Loaded ${Object.keys(events).length} event(s)...`, events);
+
 module.exports = (relPath, workerData) => new Promise(async res => {
     await console.log(`[Server | Worker] Starting worker.`);
 
@@ -23,9 +33,9 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         obj.worker.ref();
 
         obj.worker.addEventListener(`message`, async ({ data }={}) => {
-            await console.log(`[Server | Worker] Worker running.`);
-
             if(data.type == `init`) {
+                console.log(`[Server | Worker] Worker running.`);
+    
                 obj.worker.postMessage({
                     type: `init`,
                     value: workerData
@@ -44,6 +54,30 @@ module.exports = (relPath, workerData) => new Promise(async res => {
                         value: obj.swagger
                     });
                 }
+            } else if(data.type == `event` && data.event && data._id) {
+                if(events[data.event]) {
+                    console.log(`[Server | Worker] Handling event ${data.event}`, data);
+
+                    try {
+                        const result = await events[data.event](...data.data);
+
+                        obj.worker.postMessage({
+                            type: `event`,
+                            result,
+                            error: null,
+                            _id: data._id
+                        });
+                    } catch(e) {
+                        obj.worker.postMessage({
+                            type: `event`,
+                            result: null,
+                            error: e.toString(),
+                            _id: data._id
+                        });
+                    }
+                } else {
+                    console.log(`[Server | Worker] Unhandled event ${data.event}`, data);
+                }
             }
         });
 
@@ -53,7 +87,7 @@ module.exports = (relPath, workerData) => new Promise(async res => {
         });
 
         obj.worker.addEventListener(`error`, e => {
-            console.log(`[Server | Worker] Worker has errored: ${e.message === undefined ? e : e.message}`);
+            console.log(`[Server | Worker] Worker has errored: ${e.message === undefined ? e : e.message}`, e);
             r();
         });
 

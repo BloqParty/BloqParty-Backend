@@ -1,4 +1,5 @@
 const { Models } = require(`../service/mongo`);
+const sendEvent = require(`./sendEvent`);
 const strip = require(`./strip`);
 const arrStrip = require(`./removeArrayDuplicates`);
 
@@ -338,11 +339,11 @@ module.exports = {
             rej(e);
         })
     }),
-    scoreUpload: (hash, body) => {
+    scoreUpload: (hash, body) => new Promise(async (res, rej) => {
         if (body.accuracy > 121)
             rej("Accuracy is above maximum!");
 
-        const scoreObject = {
+        const holdName = hash.trim().toUpperCase(), scoreObject = {
             id: body.id,
             multipliedScore: body.multipliedScore,
             modifiedScore: body.modifiedScore,
@@ -359,109 +360,131 @@ module.exports = {
             perfectStreak: body.perfectStreak,
             fcAccuracy: body.fcAccuracy,
             timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
-        }
+        };
 
-        return new Promise(async (res, rej) => {
-            try {
-                const [ leaderboard, user ] = await Promise.all([
-                    Models.leaderboards.findOne({ hash }),
-                    Models.users.findOne({ gameID: body.id })
-                ]);
+        const getLeaderboard = () => Models.leaderboards.findOne({ hash });
 
-                let embedContent = {
-                    title: `${user.username} has uploaded a score to ${hash}`,
-                    fields: [
-                        {
-                            name: "Score",
-                            value: `**Multiplied Score:** ${body.multipliedScore.toLocaleString()} \n**Modified Score:** ${body.modifiedScore.toLocaleString()} \n**Misses:** ${body.misses} \n`
-                            + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
-                            inline: true
-                        },
-                        {
-                            name: "Accuracy",
-                            value: `**Accuracy:** ${body.accuracy.toFixed(2)}% \n**FC Accuracy:** ${body.fcAccuracy.toFixed(2)}% \n**Left Hand Average Score:** ${body.leftHandAverageScore.toFixed(2)} \n`
-                            + `**Right Hand Average Score:** ${body.rightHandAverageScore.toFixed(2)} \n**Left Time Dependency:** ${body.leftHandTimeDependency.toFixed(2)} \n**Right Time Dependency:** ${body.rightHandTimeDependency.toFixed(2)}`,
-                            inline: true
-                        }
-                    ],
-                    thumbnail: {
-                        url: `https://cdn.beatsaver.com/${hash.toLowerCase()}.jpg`
-                    },
-                    color: 0x00ff00,
-                    url: `https://thebedroom.party/leaderboard/${hash}/`
+        try {
+            let [ leaderboard, user ] = await Promise.all([
+                getLeaderboard(),
+                Models.users.findOne({ gameID: body.id })
+            ]);
+
+            if(!leaderboard) {
+                const hold = await sendEvent(`hold`, `${holdName}`);
+
+                console.log(`[API | /leaderboard/hash/upload] Leaderboard held for ${hash}: ${hold} (${typeof hold})`);
+
+                if(!hold) {
+                    const started = Date.now();
+
+                    console.log(`[API | /leaderboard/hash/upload] Leaderboard already held for ${hash}, awaiting release.`);
+
+                    const result = await sendEvent(`await`, `${holdName}`);
+
+                    console.log(`[API | /leaderboard/hash/upload] Leaderboard released for ${hash}: ${result} (${typeof result}) (took ${Date.now() - started}ms), fetching again.`);
+
+                    leaderboard = await getLeaderboard();
                 }
-
-                if(!leaderboard) {
-                    console.log(`[API | /leaderboard/hash/upload] Leaderboard not found for ${hash}, creating a new leaderboard.`);
-
-                    const request = await fetch(`https://api.beatsaver.com/maps/hash/${hash}`).then(a => a.json());
-
-                    if(request.error) return rej(`Leaderboard doesn't exist on BeatSaver, upload is forbidden`);
-
-                    const newLeaderboard = new Models.leaderboards({
-                        name: request.metadata.songName,
-                        hash,
-                        scores: {
-                            [body.characteristic]: {
-                                [body.difficulty.toString()]: [
-                                    scoreObject
-                                ]
-                            }
-                        }
-                    });
-
-                    await newLeaderboard.save();
-
-                    embedContent.title = `${user.username} has uploaded a score to ${request.metadata.songName}`;
-
-                    res(`Created new leaderboard and uploaded score.`);
-                } else {
-                    console.log(`[API | /leaderboard/hash/upload] Leaderboard found for ${hash}, attempting upload`);
-
-                    const { scores, name } = leaderboard.toObject();
-
-                    // create difficulty if it doesn't exist
-                    if(!scores[body.characteristic]) scores[body.characteristic] = {};
-                    if(!scores[body.characteristic][body.difficulty.toString()]) scores[body.characteristic][body.difficulty.toString()] = [];
-
-                    const existingScore = scores[body.characteristic][body.difficulty.toString()].find(a => a.id === body.id);
-
-                    if(existingScore && existingScore.accuracy >= body.accuracy) {
-                        return rej(`Not a highscore`);
-                    } else if(existingScore) {
-                        await Models.leaderboards.updateOne({ hash }, {
-                            $pull: {
-                                [`scores.${body.characteristic}.${body.difficulty.toString()}`]: existingScore
-                            }
-                        }); // remove old score
-                    }
-
-                    await Models.leaderboards.updateOne({ hash }, {
-                        $push: {
-                            [`scores.${body.characteristic}.${body.difficulty.toString()}`]: scoreObject
-                        }
-                    });
-
-                    embedContent.title = `${user.username} has uploaded a score to ${name}`;
-
-                    res(`Uploaded score.`);
-                }
-
-                fetch(process.env.WEBHOOK_URL, {
-                    method: "POST",
-                    headers: {
-                        "content-type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: "Score Upload Bot",
-                        embeds: [ embedContent ]
-                    })
-                }).catch(e => {
-                    console.log(`[API | /leaderboard/hash/upload] Error occured: ${e}`);
-                })
-            } catch(e) {
-                rej(e);
             }
-        })
-    }
+
+            let embedContent = {
+                title: `${user.username} has uploaded a score to ${hash}`,
+                fields: [
+                    {
+                        name: "Score",
+                        value: `**Multiplied Score:** ${body.multipliedScore.toLocaleString()} \n**Modified Score:** ${body.modifiedScore.toLocaleString()} \n**Misses:** ${body.misses} \n`
+                        + `**Bad Cuts:** ${body.badCuts} \n**Modifiers:** ${body.modifiers} \n**Pauses:** ${body.pauses}`,
+                        inline: true
+                    },
+                    {
+                        name: "Accuracy",
+                        value: `**Accuracy:** ${body.accuracy.toFixed(2)}% \n**FC Accuracy:** ${body.fcAccuracy.toFixed(2)}% \n**Left Hand Average Score:** ${body.leftHandAverageScore.toFixed(2)} \n`
+                        + `**Right Hand Average Score:** ${body.rightHandAverageScore.toFixed(2)} \n**Left Time Dependency:** ${body.leftHandTimeDependency.toFixed(2)} \n**Right Time Dependency:** ${body.rightHandTimeDependency.toFixed(2)}`,
+                        inline: true
+                    }
+                ],
+                thumbnail: {
+                    url: `https://cdn.beatsaver.com/${hash.toLowerCase()}.jpg`
+                },
+                color: 0x00ff00,
+                url: `https://thebedroom.party/leaderboard/${hash}/`
+            }
+
+            if(!leaderboard) {
+                console.log(`[API | /leaderboard/hash/upload] Leaderboard not found for ${hash}, creating a new leaderboard.`);
+
+                const request = await fetch(`https://api.beatsaver.com/maps/hash/${hash}`).then(a => a.json());
+
+                if(request.error) return rej(`Leaderboard doesn't exist on BeatSaver, upload is forbidden`);
+
+                const newLeaderboard = new Models.leaderboards({
+                    name: request.metadata.songName,
+                    hash,
+                    scores: {
+                        [body.characteristic]: {
+                            [body.difficulty.toString()]: [
+                                scoreObject
+                            ]
+                        }
+                    }
+                });
+
+                await newLeaderboard.save();
+
+                embedContent.title = `${user.username} has uploaded a score to ${request.metadata.songName}`;
+
+                res(`Created new leaderboard and uploaded score.`);
+
+                const release = await sendEvent(`release`, `${holdName}`);
+
+                console.log(`[API | /leaderboard/hash/upload] Released hold on ${hash}: ${release} (${typeof release})`);
+            } else {
+                console.log(`[API | /leaderboard/hash/upload] Leaderboard found for ${hash}, attempting upload`);
+
+                const { scores, name } = leaderboard.toObject();
+
+                // create difficulty if it doesn't exist
+                if(!scores[body.characteristic]) scores[body.characteristic] = {};
+                if(!scores[body.characteristic][body.difficulty.toString()]) scores[body.characteristic][body.difficulty.toString()] = [];
+
+                const existingScore = scores[body.characteristic][body.difficulty.toString()].find(a => a.id === body.id);
+
+                if(existingScore && existingScore.accuracy >= body.accuracy) {
+                    return rej(`Not a highscore`);
+                } else if(existingScore) {
+                    await Models.leaderboards.updateOne({ hash }, {
+                        $pull: {
+                            [`scores.${body.characteristic}.${body.difficulty.toString()}`]: existingScore
+                        }
+                    }); // remove old score
+                }
+
+                await Models.leaderboards.updateOne({ hash }, {
+                    $push: {
+                        [`scores.${body.characteristic}.${body.difficulty.toString()}`]: scoreObject
+                    }
+                });
+
+                embedContent.title = `${user.username} has uploaded a score to ${name}`;
+
+                res(`Uploaded score.`);
+            }
+
+            process.env.WEBHOOK_URL && fetch(process.env.WEBHOOK_URL, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: "Score Upload Bot",
+                    embeds: [ embedContent ]
+                })
+            }).catch(e => {
+                console.log(`[API | /leaderboard/hash/upload] Error occured: ${e}`);
+            })
+        } catch(e) {
+            rej(e);
+        }
+    })
 }
