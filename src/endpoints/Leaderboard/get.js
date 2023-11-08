@@ -34,7 +34,7 @@ module.exports = {
         id: {
             type: `string`,
             description: `User ID; used for "sort" type`,
-            required: true,
+            required: false,
         },
     },
     params: {
