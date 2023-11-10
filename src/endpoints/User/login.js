@@ -27,23 +27,35 @@ module.exports = {
             type: `string`,
             required: false,
         },
+        hmd: {
+            type: `integer`,
+            required: false,
+        },
+        controller: {
+            type: `integer`,
+            required: false,
+        },
     },
     post: async (req, res) => {
         if(req.body.session) {
-            if(!req.body.gameVersion || !req.body.pluginVersion) {
+            const sessionDetails = {
+                gameVersion: req.body.gameVersion?.split(``).filter(s => !isNaN(s) || s == `.`).join(``), // should be a number (e.g. "1.29.1")
+                pluginVersion: req.body.pluginVersion?.split(` `)[1]?.split(``).filter(s => !isNaN(s) || s == `.`).join(``), // should be a number (e.g. "0.1.0")
+                platform: req.body.pluginVersion?.split(` `)[0], // should be either "PC" or "Quest"
+                hmd: req.body.hmd,
+                controller: req.body.controller,
+            };
+
+            if(Object.values(sessionDetails).some(v => typeof v !== `string` && typeof v !== `number`)) {
                 return res.status(400).send({
-                    error: `Missing gameVersion or pluginVersion (required on session login)`
+                    error: `Missing required fields for session login: ${Object.keys(sessionDetails).filter(k => sessionDetails[k] === undefined).join(`, `)}`
                 });
             } else {
                 const invalid = {};
 
-                const platform = req.body.pluginVersion.split(` `)[0]; // should be either "PC" or "Quest"
-                const gameVersion = req.body.gameVersion.split(``).filter(s => !isNaN(s) || s == `.`).join(``); // should be a number (e.g. "1.29.1")
-                const pluginVersion = req.body.pluginVersion.split(` `)[1]?.split(``).filter(s => !isNaN(s) || s == `.`).join(``); // should be a number (e.g. "0.1.0")
-
-                if(!gameVersion || !versionScopes.gameVersion.includes(gameVersion)) invalid['gameVersion'] = `This game version (${gameVersion}) is not supported.`;
-                if(!versionScopes.pluginVersion[platform]) invalid['platform'] = `Unknown platform (${platform})`;
-                else if(!versionScopes.pluginVersion[platform].includes(pluginVersion)) invalid['pluginVersion'] = `This mod version (${pluginVersion}) is not supported.`;
+                if(!sessionDetails.gameVersion || !versionScopes.gameVersion.includes(sessionDetails.gameVersion)) invalid['gameVersion'] = `This game version (${sessionDetails.gameVersion}) is not supported.`;
+                if(!versionScopes.pluginVersion[sessionDetails.platform]) invalid['platform'] = `Unknown platform (${sessionDetails.platform})`;
+                else if(!versionScopes.pluginVersion[sessionDetails.platform].includes(sessionDetails.pluginVersion)) invalid['pluginVersion'] = `This mod version (${sessionDetails.pluginVersion}) is not supported.`;
 
                 if(Object.keys(invalid).length) {
                     return res.status(403).send({
@@ -53,7 +65,7 @@ module.exports = {
                 } else {
                     console.log(`[API | /user/login/] Logging in ${req.user.username} with new session.`);
         
-                    user.login(req.user.apiKey).then(usr => {
+                    user.login(req.user.apiKey, ).then(usr => {
                         if(usr.sessionKey) {
                             res.send(Object.assign(strip(usr), {
                                 sessionKey: usr.sessionKey,

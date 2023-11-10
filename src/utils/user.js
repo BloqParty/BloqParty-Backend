@@ -70,11 +70,12 @@ module.exports = {
             }
         }
     }),
-    login: (apiKey) => new Promise(async (res) => {
+    login: (apiKey, sessionDetails) => new Promise(async (res) => {
         const sessionKey = crypto.randomBytes(25).toString(`hex`);
         const sessionKeyExpires = Date.now() + 2.16e+7; // 6 hours
 
         Models.users.findOneAndUpdate({ apiKey }, {
+            sessionDetails,
             sessionKey,
             sessionKeyExpires
         }).then(doc => {

@@ -370,6 +370,8 @@ module.exports = {
                 Models.users.findOne({ gameID: body.id })
             ]);
 
+            if(user && user.sessionDetails) Object.assign(scoreObject, { session: user.sessionDetails });
+
             if(!leaderboard) {
                 const hold = await sendEvent(`hold`, `${holdName}`);
 
@@ -406,6 +408,9 @@ module.exports = {
                 ],
                 thumbnail: {
                     url: `https://cdn.beatsaver.com/${hash.toLowerCase()}.jpg`
+                },
+                footer: {
+                    text: `Scored using {controller name} on {headset name}`
                 },
                 color: 0x00ff00,
                 url: `https://thebedroom.party/leaderboard/${hash}/`
