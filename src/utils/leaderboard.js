@@ -343,34 +343,15 @@ module.exports = {
         if (body.accuracy > 121)
             rej("Accuracy is above maximum!");
 
-        const holdName = hash.trim().toUpperCase(), scoreObject = {
-            id: body.id,
-            multipliedScore: body.multipliedScore,
-            modifiedScore: body.modifiedScore,
-            accuracy: body.accuracy,
-            misses: body.misses,
-            badCuts: body.badCuts,
-            fullCombo: body.fullCombo,
-            modifiers: body.modifiers,
-            pauses: body.pauses,
-            leftHandAverageScore: body.leftHandAverageScore,
-            rightHandAverageScore: body.rightHandAverageScore,
-            leftHandTimeDependency: body.leftHandTimeDependency,
-            rightHandTimeDependency: body.rightHandTimeDependency,
-            perfectStreak: body.perfectStreak,
-            fcAccuracy: body.fcAccuracy,
-            timeSet: BigInt(Math.floor(Date.now()/1000)) // i64 on rust api?
-        };
+        const holdName = hash.trim().toUpperCase();
 
         const getLeaderboard = () => Models.leaderboards.findOne({ hash });
 
         try {
             let [ leaderboard, user ] = await Promise.all([
                 getLeaderboard(),
-                Models.users.findOne({ gameID: body.id })
+                Models.users.findOne({ gameID: body.id }).then(r => r.toObject())
             ]);
-
-            if(user && user.sessionDetails) Object.assign(scoreObject, { session: user.sessionDetails });
 
             if(!leaderboard) {
                 const hold = await sendEvent(`hold`, `${holdName}`);
@@ -409,12 +390,29 @@ module.exports = {
                 thumbnail: {
                     url: `https://cdn.beatsaver.com/${hash.toLowerCase()}.jpg`
                 },
-                footer: {
-                    text: `Scored using {controller name} on {headset name}`
-                },
                 color: 0x00ff00,
                 url: `https://thebedroom.party/leaderboard/${hash}/`
             }
+
+            const scoreObject = {
+                id: body.id,
+                multipliedScore: body.multipliedScore,
+                modifiedScore: body.modifiedScore,
+                accuracy: body.accuracy,
+                misses: body.misses,
+                badCuts: body.badCuts,
+                fullCombo: body.fullCombo,
+                modifiers: body.modifiers,
+                pauses: body.pauses,
+                leftHandAverageScore: body.leftHandAverageScore,
+                rightHandAverageScore: body.rightHandAverageScore,
+                leftHandTimeDependency: body.leftHandTimeDependency,
+                rightHandTimeDependency: body.rightHandTimeDependency,
+                perfectStreak: body.perfectStreak,
+                fcAccuracy: body.fcAccuracy,
+                timeSet: BigInt(Math.floor(Date.now()/1000)), // i64 on rust api?
+                session: user.sessionDetails
+            };
 
             if(!leaderboard) {
                 console.log(`[API | /leaderboard/hash/upload] Leaderboard not found for ${hash}, creating a new leaderboard.`);
