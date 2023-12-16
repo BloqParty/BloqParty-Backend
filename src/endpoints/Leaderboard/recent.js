@@ -1,7 +1,7 @@
 const leaderboard = require('../../utils/leaderboard');
 
 module.exports = {
-    path: `/leaderboard/recent`,
+    path: `/recent`,
     description: `Gets posted scores from a specific map hash`,
     query: {
         page: {
