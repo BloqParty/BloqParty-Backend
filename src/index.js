@@ -133,9 +133,9 @@ server.listen(parseInt(process.env.PORT), () => {
         },
         body: JSON.stringify({
             username: "Server Monitor Bot",
-            color: 0x00ff00,
             embeds: [ {
                 title: `Server Started`,
+                color: 0x00ff00,
                 description: `**Server:** ${process.env.DATABASE === "production" ? "Production" : "Development"}`
             } ]
         })
