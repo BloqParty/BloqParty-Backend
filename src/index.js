@@ -125,4 +125,19 @@ swaggerObj.then(json => {
 
 server.listen(parseInt(process.env.PORT), () => {
     console.log(`[Server | Startup] Started proxy on port ${process.env.PORT}`);
+
+    fetch(process.env.NOTIF_WEBHOOK, {
+        method: "POST",
+        headers: {
+            "content-type": "application/json"
+        },
+        body: JSON.stringify({
+            username: "Server Monitor Bot",
+            color: 0x00ff00,
+            embeds: [ {
+                title: `Server Started`,
+                description: `**Server:** ${process.env.DATABASE === "production" ? "Production" : "Development"}`
+            } ]
+        })
+    });
 });

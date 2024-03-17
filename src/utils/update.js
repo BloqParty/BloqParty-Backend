@@ -13,7 +13,21 @@ module.exports = () => new Promise(res => {
                     child_process.exec(`bun i`, (e, out, _) => {
                         if(!err) {
                             console.log(`[Server | Automatic Update] Ran install successfully.`);
-                            res(true)
+                            fetch(process.env.NOTIF_WEBHOOK, {
+                                method: "POST",
+                                headers: {
+                                    "content-type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    username: "Server Monitor Bot",
+                                    embeds: [ {
+                                        title: `Server Received Update`,
+                                        color: 0x00ff00,
+                                        description: `**Server:** ${process.env.DATABASE === "production" ? "Production" : "Development"} \n\nServer is now restarting`
+                                    } ]
+                                })
+                        });
+                        res(true)
                         } else {
                             console.error(`[Server | Automatic Update] Error occured ${e}`);
                         }
