@@ -1,0 +1,3 @@
+[submodule "BloqParty-Backend.Private"]
+	path = BloqParty-Backend.Private
+	url = https://github.com/BloqParty/BloqParty-Backend.Private.git
