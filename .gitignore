@@ -171,3 +171,5 @@ dist
 # stuff
 
 src/extras/Users/
+prisma/migrations
+prisma/dev.db
