@@ -28,6 +28,7 @@
     "mongoose": "^7.5.0",
     "prisma": "^5.12.1",
     "sha3": "^2.1.4",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "yabsl": "^1.1.1"
   }
 }
