@@ -45,4 +45,4 @@ function registerEndpoint(endpoint, get, post)
     }
 }
 
-app.listen(3333, () => console.log("[Server | Setup] Started successfully on port 3333"));
+app.listen(parseInt(process.env.PORT), () => console.log("[Server | Setup] Started successfully on port " + process.env.PORT));
