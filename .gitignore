@@ -172,4 +172,5 @@ dist
 
 src/extras/Users/
 prisma/migrations
+prisma/prisma
 prisma/dev.db

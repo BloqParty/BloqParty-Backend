@@ -4,7 +4,7 @@ const fs = require("fs");
 
 if (!fs.existsSync("./BloqParty-Backend.Private"))
 {
-    console.log("Execute `bun run module-init` or `bun run module-update`");
+    console.log("Execute `bun run module-init` and `bun run module-update` if previously cached version installed");
     return;
 }
 
@@ -21,9 +21,12 @@ registerFiles("leaderboard", true);
 
 function registerFiles(category, isPrivate)
 {
-    const files = fs.readdirSync(`${isPrivate ? "./BloqParty-Backend.Private" : "./src/api"}/${category}`).filter(x => x.endsWith(".js"));
+    const path = isPrivate ? "./BloqParty-Backend.Private" : "./src/api";
+    const requirePath = isPrivate ? "../BloqParty-Backend.Private" : "./api";
+
+    const files = fs.readdirSync(`${path}/${category}`).filter(x => x.endsWith(".js"));
     files.forEach((value) => {
-        const { endpoint, get, post } = require(`${isPrivate ? "../BloqParty-Backend.Private" : "./api"}/${category}/${value}`);
+        const { endpoint, get, post } = require(`${requirePath}/${category}/${value}`);
         registerEndpoint(endpoint, get ?? undefined, post ?? undefined);
     })
 }
@@ -42,4 +45,4 @@ function registerEndpoint(endpoint, get, post)
     }
 }
 
-app.listen(3333, () => console.log("[Server | Setup] Started successfully on port 3333"));
+app.listen(parseInt(process.env.PORT), () => console.log("[Server | Setup] Started successfully on port " + process.env.PORT));
