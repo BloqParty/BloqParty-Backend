@@ -11,8 +11,13 @@ if (!fs.existsSync("./BloqParty-Backend.Private"))
 const app = express();
 app.use(express.json());
 
+// Register Public API Endpoints
 registerFiles("user", false);
+//registerFiles("leaderboard", false);
+
+// Register Private API Endpoints
 registerFiles("user", true);
+registerFiles("leaderboard", true);
 
 function registerFiles(category, isPrivate)
 {
