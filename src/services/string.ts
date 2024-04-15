@@ -10,6 +10,7 @@ export class StringService
     constructor()
     {
         this.sha3 = new SHA3(512);
+        console.log("[Server | Startup] Constructed StringService");
     }
     
     hashString(str: string): string
