@@ -8,8 +8,7 @@
 		],
 
 		"rootDirs": [ 
-			"./src", 
-			"./BloqParty-Backend.Private" 
+			"./src"
 		],
 		"outDir": "lib",
 
@@ -36,6 +35,7 @@
 	},
 	"include": [
 		"typings/**/*",
-		"src/**/*"
+		"src/**/*", 
+		"BloqParty-Backend.Private/**/*"	
 	]
 }
