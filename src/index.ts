@@ -19,6 +19,7 @@ import "./endpoints/getUser";
 //#region Private Endpoints
 
 import "./BloqParty-Backend.Private/createUser";
+import "./BloqParty-Backend.Private/userLogin";
 
 //#endregion
 
