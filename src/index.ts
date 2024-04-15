@@ -19,10 +19,10 @@ import "./endpoints/leaderboardInfo";
 //#endregion
 //#region Private Endpoints
 
-import "./BloqParty-Backend.Private/userCreate";
-import "./BloqParty-Backend.Private/userLogin";
-import "./BloqParty-Backend.Private/userAPIKey";
-import "./BloqParty-Backend.Private/leaderboardUpload";
+import "../BloqParty-Backend.Private/userCreate";
+import "../BloqParty-Backend.Private/userLogin";
+import "../BloqParty-Backend.Private/userAPIKey";
+import "../BloqParty-Backend.Private/leaderboardUpload";
 
 //#endregion
 
