@@ -13,7 +13,8 @@ container.bind<StringService>("StringService").toConstantValue(stringService);
 
 //#region Public Endpoints
 
-import "./endpoints/getUser";
+import "./endpoints/userGet";
+import "./endpoints/leaderboardInfo";
 
 //#endregion
 //#region Private Endpoints
@@ -21,6 +22,7 @@ import "./endpoints/getUser";
 import "./BloqParty-Backend.Private/userCreate";
 import "./BloqParty-Backend.Private/userLogin";
 import "./BloqParty-Backend.Private/userAPIKey";
+import "./BloqParty-Backend.Private/leaderboardUpload";
 
 //#endregion
 
