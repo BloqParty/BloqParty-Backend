@@ -8,7 +8,9 @@ export class UserGet
 {
     constructor(
         @inject('PrismaService') private readonly prismaService: PrismaService
-    ) {}
+    ) {
+        console.log("[Server | Webhook] Constructed UserGet (Endpoint)");
+    }
 
     @httpGet("/:id")
     public async get(req: Request, res: Response)

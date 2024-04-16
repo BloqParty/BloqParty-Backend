@@ -8,7 +8,9 @@ export class LeaderboardInfo
 {
     constructor(
         @inject("PrismaService") private readonly prismaService: PrismaService
-    ) {}
+    ) {
+        console.log("[Server | Webhook] Constructed LeaderboardInfo (Endpoint)");
+    }
 
     @httpGet("/:hash/info")
     public async get(req: Request, res: Response)

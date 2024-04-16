@@ -6,10 +6,12 @@ import { InversifyExpressServer } from "inversify-express-utils";
 import { json } from "express";
 import { PrismaService, prismaService } from "./services/prisma";
 import { StringService, stringService } from "./services/string";
+import { WebhookService, webhookService } from "./services/webhook";
 
 const container = new Container();
 container.bind<PrismaService>("PrismaService").toConstantValue(prismaService);
 container.bind<StringService>("StringService").toConstantValue(stringService);
+container.bind<WebhookService>("WebhookService").toConstantValue(webhookService);
 
 //#region Public Endpoints
 
@@ -23,6 +25,8 @@ import "../BloqParty-Backend.Private/userCreate";
 import "../BloqParty-Backend.Private/userLogin";
 import "../BloqParty-Backend.Private/userAPIKey";
 import "../BloqParty-Backend.Private/leaderboardUpload";
+import "../BloqParty-Backend.Private/leaderboardRank";
+
 
 //#endregion
 

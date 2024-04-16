@@ -9,7 +9,7 @@ export class PrismaService
     constructor() 
     {
         this.prisma = new PrismaClient();
-        console.log("[Server | Startup] Constructed PrismaService");
+        console.log("[Server | Startup] Constructed PrismaService (Service)");
     }
 
     get client(): PrismaClient
