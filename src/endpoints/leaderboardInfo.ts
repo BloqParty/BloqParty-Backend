@@ -9,7 +9,7 @@ export class LeaderboardInfo
     constructor(
         @inject("PrismaService") private readonly prismaService: PrismaService
     ) {
-        console.log("[Server | Webhook] Constructed LeaderboardInfo (Endpoint)");
+        console.log("[Server | Endpoint] Constructed LeaderboardInfo (Endpoint)");
     }
 
     @httpGet("/:hash/info")
@@ -30,6 +30,7 @@ export class LeaderboardInfo
         res.status(200).json({
             hash: leaderboard.hash,
             scoreCount: leaderboard.scoreCount,
+            starRating: leaderboard.starRating,
             metadata
         });
     }
