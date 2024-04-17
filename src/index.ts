@@ -7,11 +7,13 @@ import { json } from "express";
 import { PrismaService, prismaService } from "./services/prisma";
 import { StringService, stringService } from "./services/string";
 import { WebhookService, webhookService } from "./services/webhook";
+import { LeaderboardService, leaderboardService } from "../BloqParty-Backend.Private/services/leaderboard";
 
 const container = new Container();
 container.bind<PrismaService>("PrismaService").toConstantValue(prismaService);
 container.bind<StringService>("StringService").toConstantValue(stringService);
 container.bind<WebhookService>("WebhookService").toConstantValue(webhookService);
+container.bind<LeaderboardService>("LeaderboardService").toConstantValue(leaderboardService);
 
 //#region Public Endpoints
 
@@ -21,11 +23,11 @@ import "./endpoints/leaderboardInfo";
 //#endregion
 //#region Private Endpoints
 
-import "../BloqParty-Backend.Private/userCreate";
-import "../BloqParty-Backend.Private/userLogin";
-import "../BloqParty-Backend.Private/userAPIKey";
-import "../BloqParty-Backend.Private/leaderboardUpload";
-import "../BloqParty-Backend.Private/leaderboardRank";
+import "../BloqParty-Backend.Private/endpoints/userCreate";
+import "../BloqParty-Backend.Private/endpoints/userLogin";
+import "../BloqParty-Backend.Private/endpoints/userAPIKey";
+import "../BloqParty-Backend.Private/endpoints/leaderboardUpload";
+import "../BloqParty-Backend.Private/endpoints/leaderboardRank";
 
 
 //#endregion
