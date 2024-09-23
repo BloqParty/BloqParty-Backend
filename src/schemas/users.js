@@ -28,5 +28,6 @@ module.exports = new Schema({
         required: true
     },
     sessionKey: String,
-    sessionKeyExpires: Number
+    sessionKeyExpires: Number,
+    sessionDetails: Object,
 })

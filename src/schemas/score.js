@@ -16,5 +16,6 @@ module.exports = new Schema({
     leftHandTimeDependency: Number,
     rightHandTimeDependency: Number,
     perfectStreak: Number,
-    fcAccuracy: Number
+    fcAccuracy: Number,
+    session: Object,
 })
